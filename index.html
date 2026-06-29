@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bodega and Barra - Holy Moly Tobalaba</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', sans-serif; background: #1a1a2e; color: #eee; min-height: 100vh; }
+header { background: #16213e; padding: 16px 20px; display: flex; align-items: center; gap: 12px; border-bottom: 2px solid #e94560; }
+header h1 { font-size: 1.3rem; color: #fff; }
+.tabs { display: flex; background: #16213e; border-bottom: 1px solid #0f3460; }
+.tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; font-size: 0.85rem; color: #aaa; border-bottom: 3px solid transparent; transition: all 0.2s; }
+.tab.active { color: #e94560; border-bottom-color: #e94560; background: rgba(233,69,96,0.08); }
+.section { display: none; padding: 16px; }
+.section.active { display: block; }
+.search-bar { width: 100%; padding: 10px 14px; border-radius: 8px; border: 1px solid #0f3460; background: #16213e; color: #eee; font-size: 0.9rem; margin-bottom: 16px; }
+.search-bar:focus { outline: none; border-color: #e94560; }
+.category-filter { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+.cat-btn { padding: 6px 14px; border-radius: 20px; border: 1px solid #0f3460; background: #16213e; color: #aaa; cursor: pointer; font-size: 0.78rem; transition: all 0.2s; }
+.cat-btn.active { background: #e94560; border-color: #e94560; color: #fff; }
+.product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+.product-card { background: #16213e; border-radius: 12px; padding: 14px; border: 1px solid #0f3460; cursor: pointer; transition: transform 0.2s, border-color 0.2s; }
+.product-card:hover { transform: translateY(-2px); border-color: #e94560; }
+.product-card .emoji { font-size: 2rem; margin-bottom: 8px; display: block; }
+.product-card .name { font-size: 0.85rem; font-weight: 600; color: #fff; margin-bottom: 4px; }
+.product-card .price { font-size: 0.9rem; color: #e94560; font-weight: 700; }
+.product-card .stock { font-size: 0.7rem; color: #888; margin-top: 4px; }
+.add-btn { width: 100%; margin-top: 10px; padding: 7px; border-radius: 8px; border: none; background: #e94560; color: #fff; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+.add-btn:disabled { background: #555; cursor: not-allowed; }
+.cart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.cart-count { background: #e94560; color: #fff; border-radius: 20px; padding: 4px 12px; font-size: 0.8rem; font-weight: 700; }
+.cart-item { background: #16213e; border-radius: 10px; padding: 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; border: 1px solid #0f3460; }
+.cart-item .info { flex: 1; }
+.cart-item .item-name { font-size: 0.85rem; font-weight: 600; }
+.cart-item .item-price { font-size: 0.8rem; color: #e94560; }
+.qty-controls { display: flex; align-items: center; gap: 8px; }
+.qty-btn { width: 28px; height: 28px; border-radius: 50%; border: none; background: #0f3460; color: #fff; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+.qty-btn:hover { background: #e94560; }
+.qty-display { font-size: 0.9rem; font-weight: 700; min-width: 20px; text-align: center; }
+.remove-btn { background: none; border: none; color: #e94560; cursor: pointer; font-size: 1rem; padding: 4px; }
+.cart-total { background: #0f3460; border-radius: 12px; padding: 16px; margin-top: 16px; }
+.total-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem; }
+.total-row.grand { font-size: 1.1rem; font-weight: 700; color: #e94560; border-top: 1px solid #1a4a7a; padding-top: 8px; margin-top: 8px; }
+.send-btn { width: 100%; padding: 14px; margin-top: 16px; border-radius: 12px; border: none; background: #25d366; color: #fff; font-size: 1rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+.empty-cart { text-align: center; padding: 40px 20px; color: #888; }
+.empty-cart .icon { font-size: 3rem; margin-bottom: 12px; }
+.history-item { background: #16213e; border-radius: 10px; padding: 14px; margin-bottom: 10px; border-left: 3px solid #e94560; }
+.history-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+.history-date { font-size: 0.75rem; color: #888; }
+.history-total { font-size: 0.9rem; font-weight: 700; color: #e94560; }
+.history-items { font-size: 0.8rem; color: #aaa; }
+.badge { background: #e94560; color: #fff; border-radius: 50%; width: 18px; height: 18px; font-size: 0.65rem; display: inline-flex; align-items: center; justify-content: center; margin-left: 4px; font-weight: 700; }
+.modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); z-index: 1000; align-items: flex-end; }
+.modal.open { display: flex; }
+.modal-content { background: #1a1a2e; border-radius: 20px 20px 0 0; padding: 24px; width: 100%; max-height: 80vh; overflow-y: auto; }
+.modal-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; }
+.modal-emoji { font-size: 3rem; display: block; text-align: center; margin-bottom: 12px; }
+.modal-price { text-align: center; font-size: 1.4rem; font-weight: 700; color: #e94560; margin-bottom: 8px; }
+.modal-detail { color: #aaa; font-size: 0.85rem; text-align: center; margin-bottom: 20px; }
+.modal-qty { display: flex; align-items: center; justify-content: center; gap: 20px; margin-bottom: 20px; }
+.modal-qty-btn { width: 40px; height: 40px; border-radius: 50%; border: none; background: #0f3460; color: #fff; font-size: 1.3rem; cursor: pointer; }
+.modal-qty-num { font-size: 1.5rem; font-weight: 700; min-width: 40px; text-align: center; }
+.modal-add-btn { width: 100%; padding: 14px; border-radius: 12px; border: none; background: #e94560; color: #fff; font-size: 1rem; font-weight: 700; cursor: pointer; margin-bottom: 10px; }
+.modal-close { width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #0f3460; background: transparent; color: #aaa; cursor: pointer; font-size: 0.9rem; }
+.low-stock { color: #f0a500 !important; }
+.out-stock { color: #e94560 !important; }
+.toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: #25d366; color: #fff; padding: 10px 20px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; z-index: 2000; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+<header>
+  <div style="font-size:1.8rem">&#127863;</div>
+  <div>
+    <h1>Holy Moly Tobalaba</h1>
+    <div style="font-size:0.72rem;color:#aaa;margin-top:2px">Bodega and Barra - Sistema de pedidos</div>
+  </div>
+</header>
+<div class="tabs">
+  <div class="tab active" onclick="showTab('menu',event)">Carta</div>
+  <div class="tab" onclick="showTab('cart',event)">Pedido <span class="badge" id="cartBadge" style="display:none">0</span></div>
+  <div class="tab" onclick="showTab('history',event)">Historial</div>
+</div>
+<div id="tab-menu" class="section active">
+  <input class="search-bar" type="text" placeholder="Buscar producto..." oninput="filterProducts()" id="searchInput">
+  <div class="category-filter" id="catFilter"></div>
+  <div class="product-grid" id="productGrid"></div>
+</div>
+<div id="tab-cart" class="section">
+  <div class="cart-header">
+    <div style="font-size:1rem;font-weight:700">Tu pedido</div>
+    <div class="cart-count" id="cartCount">0 items</div>
+  </div>
+  <div id="cartItems"></div>
+  <div id="cartTotalBlock" style="display:none">
+    <div class="cart-total">
+      <div class="total-row"><span>Subtotal</span><span id="subtotalDisplay">$0</span></div>
+      <div class="total-row grand"><span>TOTAL</span><span id="totalDisplay">$0</span></div>
+    </div>
+    <button class="send-btn" onclick="sendToWhatsApp()">Enviar pedido por WhatsApp</button>
+    <button onclick="clearCart()" style="width:100%;margin-top:8px;padding:10px;border-radius:10px;border:1px solid #e94560;background:transparent;color:#e94560;cursor:pointer;font-size:0.85rem;">Vaciar pedido</button>
+  </div>
+  <div id="emptyCart" class="empty-cart">
+    <div class="icon">&#128722;</div>
+    <div>Tu pedido esta vacio</div>
+    <div style="font-size:0.8rem;margin-top:6px">Agrega productos desde la carta</div>
+  </div>
+</div>
+<div id="tab-history" class="section">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+    <div style="font-size:1rem;font-weight:700">Historial de pedidos</div>
+    <button onclick="clearHistory()" style="background:none;border:1px solid #e94560;color:#e94560;padding:5px 12px;border-radius:8px;cursor:pointer;font-size:0.75rem;">Limpiar</button>
+  </div>
+  <div id="historyList"></div>
+</div>
+<div class="modal" id="productModal">
+  <div class="modal-content">
+    <span class="modal-emoji" id="modalEmoji">&#127863;</span>
+    <div class="modal-title" id="modalName" style="text-align:center"></div>
+    <div class="modal-price" id="modalPrice"></div>
+    <div class="modal-detail" id="modalDetail"></div>
+    <div class="modal-qty">
+      <button class="modal-qty-btn" onclick="changeModalQty(-1)">-</button>
+      <span class="modal-qty-num" id="modalQty">1</span>
+      <button class="modal-qty-btn" onclick="changeModalQty(1)">+</button>
+    </div>
+    <button class="modal-add-btn" onclick="addFromModal()">Agregar al pedido</button>
+    <button class="modal-close" onclick="closeModal()">Cancelar</button>
+  </div>
+</div>
+<div class="toast" id="toast">Producto agregado</div>
+<script>
+var WHATSAPP_NUMBER = '56912345678';
+var products = [
+  {id:1,name:'Cabernet Sauvignon',category:'Vinos Tintos',emoji:'&#127863;',price:5500,stock:20,desc:'Tinto chileno, notas de ciruela y cedro'},
+  {id:2,name:'Carmenere Reserva',category:'Vinos Tintos',emoji:'&#127863;',price:6800,stock:15,desc:'Gran Reserva, Valle del Maipo'},
+  {id:3,name:'Merlot',category:'Vinos Tintos',emoji:'&#127863;',price:4800,stock:18,desc:'Suave y frutal'},
+  {id:4,name:'Malbec',category:'Vinos Tintos',emoji:'&#127863;',price:6200,stock:12,desc:'Argentino, robusto'},
+  {id:5,name:'Sauvignon Blanc',category:'Vinos Blancos',emoji:'&#129346;',price:5200,stock:16,desc:'Fresco, citrico'},
+  {id:6,name:'Chardonnay',category:'Vinos Blancos',emoji:'&#129346;',price:5900,stock:14,desc:'Barricado, vainilla'},
+  {id:7,name:'Rose Provence',category:'Vinos Rose',emoji:'&#127800;',price:5500,stock:10,desc:'Rosado seco, floral'},
+  {id:8,name:'Cerveza IPA',category:'Cervezas',emoji:'&#127866;',price:3200,stock:25,desc:'Hoppy, aroma tropical'},
+  {id:9,name:'Cerveza Lager',category:'Cervezas',emoji:'&#127866;',price:2500,stock:30,desc:'Rubia suave, refrescante'},
+  {id:10,name:'Cerveza Stout',category:'Cervezas',emoji:'&#127866;',price:3400,stock:8,desc:'Oscura, cafe y chocolate'},
+  {id:11,name:'Cerveza Weizen',category:'Cervezas',emoji:'&#127866;',price:3000,stock:20,desc:'Trigo, banana'},
+  {id:12,name:'Pisco Sour',category:'Tragos',emoji:'&#127819;',price:4500,stock:99,desc:'Clasico chileno'},
+  {id:13,name:'Aperol Spritz',category:'Tragos',emoji:'&#127818;',price:5500,stock:99,desc:'Aperol y Prosecco'},
+  {id:14,name:'Gin Tonic',category:'Tragos',emoji:'&#127807;',price:5000,stock:99,desc:'Gin premium con tonica'},
+  {id:15,name:'Negroni',category:'Tragos',emoji:'&#127818;',price:5500,stock:99,desc:'Gin, Campari, Vermut'},
+  {id:16,name:'Mojito',category:'Tragos',emoji:'&#127807;',price:4800,stock:99,desc:'Ron, menta, lima'},
+  {id:17,name:'Margarita',category:'Tragos',emoji:'&#127865;',price:5200,stock:99,desc:'Tequila, triple sec'},
+  {id:18,name:'Agua Mineral',category:'Sin Alcohol',emoji:'&#128167;',price:1200,stock:40,desc:'500ml con o sin gas'},
+  {id:19,name:'Jugo Natural',category:'Sin Alcohol',emoji:'&#129380;',price:2800,stock:20,desc:'Naranja, maracuya o pina'},
+  {id:20,name:'Kombucha',category:'Sin Alcohol',emoji:'&#127861;',price:3500,stock:12,desc:'Fermentada artesanal'},
+  {id:21,name:'Ginger Ale',category:'Sin Alcohol',emoji:'&#127866;',price:2000,stock:25,desc:'Jengibre, refrescante'},
+  {id:22,name:'Tabla de Quesos',category:'Picoteo',emoji:'&#129472;',price:9800,stock:10,desc:'4 quesos con frutos secos'},
+  {id:23,name:'Tabla de Fiambres',category:'Picoteo',emoji:'&#129385;',price:10500,stock:8,desc:'Jamon, salami, bresaola'},
+  {id:24,name:'Tabla Mixta',category:'Picoteo',emoji:'&#127857;',price:14900,stock:6,desc:'Quesos y fiambres'},
+  {id:25,name:'Aceitunas Marinadas',category:'Picoteo',emoji:'&#129388;',price:3500,stock:15,desc:'Mezcla mediterranea'},
+  {id:26,name:'Pan con Mantequilla',category:'Picoteo',emoji:'&#127838;',price:2500,stock:20,desc:'Pan artesanal'}
+];
+var cart=JSON.parse(localStorage.getItem('hm_cart')||'[]');
+var historial=JSON.parse(localStorage.getItem('hm_history')||'[]');
+var currentCategory='Todos';
+var modalProduct=null;
+var modalQtyVal=1;
+var categories=['Todos'];
+products.forEach(function(p){if(categories.indexOf(p.category)<0)categories.push(p.category);});
+var catFilter=document.getElementById('catFilter');
+categories.forEach(function(cat){
+  var btn=document.createElement('button');
+  btn.className='cat-btn'+(cat==='Todos'?' active':'');
+  btn.textContent=cat;
+  btn.onclick=function(){currentCategory=cat;document.querySelectorAll('.cat-btn').forEach(function(b){b.classList.remove('active');});btn.classList.add('active');renderProducts();};
+  catFilter.appendChild(btn);
+});
+function renderProducts(){
+  var q=document.getElementById('searchInput').value.toLowerCase();
+  var grid=document.getElementById('productGrid');
+  grid.innerHTML='';
+  products.filter(function(p){return(currentCategory==='Todos'||p.category===currentCategory)&&(p.name.toLowerCase().includes(q)||p.category.toLowerCase().includes(q));}).forEach(function(p){
+    var ci=cart.find(function(c){return c.id===p.id;});
+    var inCart=ci?ci.qty:0;
+    var card=document.createElement('div');
+    card.className='product-card';
+    var sc=p.stock===99?'':p.stock<=3?'out-stock':p.stock<=8?'low-stock':'';
+    var st=p.stock===99?'':p.stock<=0?'Sin stock':p.stock<=3?'Ultimas '+p.stock:'Stock: '+p.stock;
+    card.innerHTML='<span class="emoji">'+p.emoji+'</span><div class="name">'+p.name+'</div><div class="price">$'+p.price.toLocaleString('es-CL')+'</div>'+(st?'<div class="stock '+sc+'">'+st+'</div>':'')+(inCart>0?'<div style="font-size:0.75rem;color:#25d366;margin-top:4px">En pedido: '+inCart+'</div>':'')+'<button class="add-btn" '+(p.stock===0?'disabled':'')+' onclick="openModal('+p.id+')">+ Agregar</button>';
+    grid.appendChild(card);
+  });
+}
+function filterProducts(){renderProducts();}
+function openModal(id){
+  modalProduct=products.find(function(p){return p.id===id;});
+  modalQtyVal=1;
+  document.getElementById('modalEmoji').innerHTML=modalProduct.emoji;
+  document.getElementById('modalName').textContent=modalProduct.name;
+  document.getElementById('modalPrice').textContent='$'+modalProduct.price.toLocaleString('es-CL');
+  document.getElementById('modalDetail').textContent=modalProduct.desc;
+  document.getElementById('modalQty').textContent=modalQtyVal;
+  document.getElementById('productModal').classList.add('open');
+}
+function closeModal(){document.getElementById('productModal').classList.remove('open');}
+function changeModalQty(d){
+  modalQtyVal=Math.max(1,modalQtyVal+d);
+  if(modalProduct&&modalProduct.stock!==99)modalQtyVal=Math.min(modalProduct.stock,modalQtyVal);
+  document.getElementById('modalQty').textContent=modalQtyVal;
+}
+function addFromModal(){
+  if(!modalProduct)return;
+  var ex=cart.find(function(c){return c.id===modalProduct.id;});
+  if(ex)ex.qty+=modalQtyVal;
+  else cart.push({id:modalProduct.id,name:modalProduct.name,emoji:modalProduct.emoji,price:modalProduct.price,qty:modalQtyVal});
+  saveCart();closeModal();showToast('Agregado: '+modalProduct.name);renderProducts();
+}
+function saveCart(){localStorage.setItem('hm_cart',JSON.stringify(cart));updateCartUI();}
+function updateCartUI(){
+  var total=cart.reduce(function(s,i){return s+i.price*i.qty;},0);
+  var count=cart.reduce(function(s,i){return s+i.qty;},0);
+  document.getElementById('cartBadge').textContent=count;
+  document.getElementById('cartBadge').style.display=count>0?'inline-flex':'none';
+  document.getElementById('cartCount').textContent=count+' item'+(count!==1?'s':'');
+  document.getElementById('subtotalDisplay').textContent='$'+total.toLocaleString('es-CL');
+  document.getElementById('totalDisplay').textContent='$'+total.toLocaleString('es-CL');
+  document.getElementById('cartTotalBlock').style.display=cart.length>0?'block':'none';
+  document.getElementById('emptyCart').style.display=cart.length>0?'none':'block';
+  var ci=document.getElementById('cartItems');
+  ci.innerHTML='';
+  cart.forEach(function(item){
+    var div=document.createElement('div');
+    div.className='cart-item';
+    div.innerHTML='<span style="font-size:1.5rem">'+item.emoji+'</span><div class="info"><div class="item-name">'+item.name+'</div><div class="item-price">$'+(item.price*item.qty).toLocaleString('es-CL')+'</div></div><div class="qty-controls"><button class="qty-btn" onclick="changeQty('+item.id+',-1)">-</button><span class="qty-display">'+item.qty+'</span><button class="qty-btn" onclick="changeQty('+item.id+',1)">+</button></div><button class="remove-btn" onclick="removeItem('+item.id+')">X</button>';
+    ci.appendChild(div);
+  });
+  renderHistory();
+}
+function changeQty(id,d){
+  var item=cart.find(function(c){return c.id===id;});
+  if(!item)return;
+  item.qty+=d;
+  if(item.qty<=0)cart=cart.filter(function(c){return c.id!==id;});
+  saveCart();renderProducts();
+}
+function removeItem(id){cart=cart.filter(function(c){return c.id!==id;});saveCart();renderProducts();}
+function clearCart(){if(confirm('Vaciar el pedido?')){cart=[];saveCart();renderProducts();}}
+function sendToWhatsApp(){
+  if(cart.length===0)return;
+  var now=new Date();
+  var ds=now.toLocaleDateString('es-CL')+' '+now.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
+  var msg='PEDIDO - Holy Moly Tobalaba
+'+ds+'
+
+';
+  cart.forEach(function(item){msg+=item.name+' x'+item.qty+' -> $'+(item.price*item.qty).toLocaleString('es-CL')+'
+';});
+  var total=cart.reduce(function(s,i){return s+i.price*i.qty;},0);
+  msg+='
+TOTAL: $'+total.toLocaleString('es-CL');
+  historial.unshift({date:ds,items:cart.map(function(i){return i.name+' x'+i.qty;}),total:total});
+  localStorage.setItem('hm_history',JSON.stringify(historial.slice(0,50)));
+  cart=[];saveCart();renderProducts();
+  window.open('https://wa.me/'+WHATSAPP_NUMBER+'?text='+encodeURIComponent(msg),'_blank');
+}
+function renderHistory(){
+  var list=document.getElementById('historyList');
+  if(historial.length===0){list.innerHTML='<div class="empty-cart"><div class="icon">&#128203;</div><div>Sin pedidos aun</div></div>';return;}
+  list.innerHTML=historial.slice(0,30).map(function(h){return'<div class="history-item"><div class="history-header"><span class="history-date">'+h.date+'</span><span class="history-total">$'+h.total.toLocaleString('es-CL')+'</span></div><div class="history-items">'+h.items.join(' - ')+'</div></div>';}).join('');
+}
+function clearHistory(){if(confirm('Borrar historial?')){historial=[];localStorage.removeItem('hm_history');renderHistory();}}
+function showTab(tab,e){
+  document.querySelectorAll('.section').forEach(function(s){s.classList.remove('active');});
+  document.querySelectorAll('.tab').forEach(function(t){t.classList.remove('active');});
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(e&&e.currentTarget)e.currentTarget.classList.add('active');
+  if(tab==='history')renderHistory();
+}
+function showToast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2000);}
+document.getElementById('productModal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+renderProducts();updateCartUI();
+</script>
+</body>
+</html>
