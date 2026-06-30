@@ -38,6 +38,10 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .login-sub{font-size:12px;color:var(--text3);text-align:center;margin-bottom:22px}
 .field-lbl{font-size:12px;color:var(--text2);margin-bottom:5px;font-weight:600}
 .field-grp{margin-bottom:14px}
+.sel-wrap{position:relative}
+.sel-wrap select{width:100%;height:48px;border-radius:var(--radius);border:1.5px solid var(--border);background:#fff;color:var(--text);padding:0 40px 0 12px;font-size:15px;font-family:inherit;appearance:none;-webkit-appearance:none;cursor:pointer}
+.sel-wrap select:focus{outline:none;border-color:var(--teal)}
+.sel-wrap .sel-arrow{position:absolute;right:14px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--text3);font-size:18px}
 .pin-disp{display:flex;gap:12px;justify-content:center;margin-bottom:14px}
 .pin-dot{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);transition:all .15s}
 .pin-dot.on{background:var(--teal);border-color:var(--teal)}
@@ -123,8 +127,6 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .toast.warn{border-color:#EF9F27;color:var(--amber)}
 .toast.show{opacity:1}
 .empty{text-align:center;padding:36px 16px;color:var(--text3);font-size:13px}
-.usr-opt{padding:10px 16px;font-size:14px;cursor:pointer;color:#1A1A1A}
-.usr-opt:hover{background:#E1F5EE;color:#085041}
 </style>
 </head>
 <body>
@@ -136,27 +138,24 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
     <div class="login-sub">Holy Moly Tobalaba</div>
     <div class="field-grp">
       <div class="field-lbl">Usuario</div>
-      <div id="usr-dropdown" style="position:relative">
-        <div id="usr-selected" onclick="toggleDrop()" style="width:100%;height:44px;border-radius:10px;border:1.5px solid #D3D1C7;background:#fff;color:#888;padding:0 36px 0 12px;font-size:14px;font-family:inherit;display:flex;align-items:center;cursor:pointer;user-select:none;justify-content:space-between">
-          <span id="usr-label">Selecciona tu nombre...</span>
-          <span style="font-size:12px;color:#888">▼</span>
-        </div>
-        <div id="usr-menu" style="display:none;position:absolute;top:48px;left:0;right:0;background:#fff;border:1.5px solid #085041;border-radius:10px;z-index:500;box-shadow:0 4px 16px rgba(0,0,0,.12);overflow:hidden">
-          <div style="padding:6px 0">
-            <div style="padding:4px 12px;font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em">Encargados</div>
-            <div class="usr-opt" onclick="selectUsr('Jorge|encargado|1234','Jorge')">Jorge</div>
-            <div class="usr-opt" onclick="selectUsr('Carlos P|encargado|4321','Carlos P')">Carlos P</div>
-            <div class="usr-opt" onclick="selectUsr('Nadeska|encargado|1111','Nadeska')">Nadeska</div>
-            <div class="usr-opt" onclick="selectUsr('Angela|encargado|9876','Angela')">Angela</div>
-            <div class="usr-opt" onclick="selectUsr('Claudio|encargado|6789','Claudio')">Claudio</div>
-            <div style="padding:4px 12px;font-size:11px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.05em;margin-top:6px">Bartenders</div>
-            <div class="usr-opt" onclick="selectUsr('Bartender 1|bartender|0111','Bartender 1')">Bartender 1</div>
-            <div class="usr-opt" onclick="selectUsr('Bartender 2|bartender|0222','Bartender 2')">Bartender 2</div>
-            <div class="usr-opt" onclick="selectUsr('Bartender 3|bartender|0333','Bartender 3')">Bartender 3</div>
-          </div>
-        </div>
+      <div class="sel-wrap">
+        <select id="sel-usr" onchange="">
+          <option value="">Selecciona tu nombre...</option>
+          <optgroup label="Encargados">
+            <option value="Jorge|encargado|1234">Jorge</option>
+            <option value="Carlos P|encargado|4321">Carlos P</option>
+            <option value="Nadeska|encargado|1111">Nadeska</option>
+            <option value="Angela|encargado|9876">Angela</option>
+            <option value="Claudio|encargado|6789">Claudio</option>
+          </optgroup>
+          <optgroup label="Bartenders">
+            <option value="Bartender 1|bartender|0111">Bartender 1</option>
+            <option value="Bartender 2|bartender|0222">Bartender 2</option>
+            <option value="Bartender 3|bartender|0333">Bartender 3</option>
+          </optgroup>
+        </select>
+        <i class="ti ti-chevron-down sel-arrow"></i>
       </div>
-      <input type="hidden" id="sel-usr" value="">
     </div>
     <div class="field-grp">
       <div class="field-lbl">PIN</div>
@@ -295,23 +294,6 @@ function pk(k){
 }
 function updPin(){for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.toggle('on',i<pin.length);}
 function rPin(){pin='';updPin();}
-function toggleDrop(){
-  const m=document.getElementById('usr-menu');
-  m.style.display=m.style.display==='none'?'block':'none';
-}
-function selectUsr(val,label){
-  document.getElementById('sel-usr').value=val;
-  document.getElementById('usr-label').textContent=label;
-  document.getElementById('usr-label').style.color='#1A1A1A';
-  document.getElementById('usr-menu').style.display='none';
-}
-document.addEventListener('click',function(e){
-  const dd=document.getElementById('usr-dropdown');
-  if(dd&&!dd.contains(e.target)){
-    const m=document.getElementById('usr-menu');
-    if(m)m.style.display='none';
-  }
-});
 function doLogin(){
   const v=document.getElementById('sel-usr').value;
   const e=document.getElementById('lerr');
@@ -331,8 +313,6 @@ function doLogin(){
 function logout(){
   usr=null;pin='';rPin();
   document.getElementById('sel-usr').value='';
-  document.getElementById('usr-label').textContent='Selecciona tu nombre...';
-  document.getElementById('usr-label').style.color='#888';
   document.getElementById('lerr').textContent='';
   document.getElementById('scr-login').style.display='block';
   document.getElementById('scr-main').style.display='none';
@@ -500,18 +480,7 @@ const SCRIPT_URL_GET="https://script.google.com/macros/s/AKfycbwSnG3bsdeknzuPcgF
 const SEMANA_ACTUAL=(()=>{
   const hoy=new Date();
   const d=hoy.toISOString().slice(0,10);
-  const mapa={
-    "2026-06-29":"S27","2026-06-30":"S27","2026-07-01":"S27","2026-07-02":"S27",
-    "2026-07-03":"S27","2026-07-04":"S27","2026-07-05":"S27",
-    "2026-07-06":"S28","2026-07-07":"S28","2026-07-08":"S28","2026-07-09":"S28",
-    "2026-07-10":"S28","2026-07-11":"S28","2026-07-12":"S28",
-    "2026-07-13":"S29","2026-07-14":"S29","2026-07-15":"S29","2026-07-16":"S29",
-    "2026-07-17":"S29","2026-07-18":"S29","2026-07-19":"S29",
-    "2026-07-20":"S30","2026-07-21":"S30","2026-07-22":"S30","2026-07-23":"S30",
-    "2026-07-24":"S30","2026-07-25":"S30","2026-07-26":"S30",
-    "2026-07-27":"S31","2026-07-28":"S31","2026-07-29":"S31","2026-07-30":"S31",
-    "2026-07-31":"S31","2026-08-01":"S31","2026-08-02":"S31"
-  };
+  const mapa={"2026-06-29":"S27","2026-06-30":"S27","2026-07-01":"S27","2026-07-02":"S27","2026-07-03":"S27","2026-07-04":"S27","2026-07-05":"S27","2026-07-06":"S28","2026-07-07":"S28","2026-07-08":"S28","2026-07-09":"S28","2026-07-10":"S28","2026-07-11":"S28","2026-07-12":"S28","2026-07-13":"S29","2026-07-14":"S29","2026-07-15":"S29","2026-07-16":"S29","2026-07-17":"S29","2026-07-18":"S29","2026-07-19":"S29","2026-07-20":"S30","2026-07-21":"S30","2026-07-22":"S30","2026-07-23":"S30","2026-07-24":"S30","2026-07-25":"S30","2026-07-26":"S30","2026-07-27":"S31","2026-07-28":"S31","2026-07-29":"S31","2026-07-30":"S31","2026-07-31":"S31","2026-08-01":"S31","2026-08-02":"S31"};
   return mapa[d]||"S27";
 })();
 async function abrirInforme(){
@@ -559,31 +528,11 @@ function generarPDFSemanal(data){
       const final=base+m.entradas-m.salidas-m.mermas-m.traspasos;
       const hayMov=m.entradas||m.salidas||m.mermas||m.traspasos;
       const rowStyle=hayMov?'background:#F0FBF5':'';
-      return `<tr style="${rowStyle}">
-        <td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee">${p.nombre}</td>
-        <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee">${p.unidad}</td>
-        <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;font-weight:600;color:#0000CC">${base}</td>
-        <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;color:#3B6D11;font-weight:${m.entradas?'700':'400'}">${m.entradas||'—'}</td>
-        <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;color:#993C1D;font-weight:${m.salidas?'700':'400'}">${m.salidas||'—'}</td>
-        <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;color:#854F0B;font-weight:${m.mermas?'700':'400'}">${m.mermas||'—'}</td>
-        <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;color:#533AB7;font-weight:${m.traspasos?'700':'400'}">${m.traspasos||'—'}</td>
-        <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;font-weight:700;color:${final<=0?'#A32D2D':'#085041'}">${final}</td>
-      </tr>`;
+      return `<tr style="${rowStyle}"><td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee">${p.nombre}</td><td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee">${p.unidad}</td><td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;font-weight:600;color:#0000CC">${base}</td><td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;color:#3B6D11;font-weight:${m.entradas?'700':'400'}">${m.entradas||'—'}</td><td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;color:#993C1D;font-weight:${m.salidas?'700':'400'}">${m.salidas||'—'}</td><td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;color:#854F0B;font-weight:${m.mermas?'700':'400'}">${m.mermas||'—'}</td><td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;color:#533AB7;font-weight:${m.traspasos?'700':'400'}">${m.traspasos||'—'}</td><td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;font-weight:700;color:${final<=0?'#A32D2D':'#085041'}">${final}</td></tr>`;
     }).join('');
     tablas+=`<tr><td colspan="8" style="padding:6px 8px;background:#085041;color:#fff;font-size:11px;font-weight:700;letter-spacing:.05em">${cat.toUpperCase()}</td></tr>${filas}`;
   });
-  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Informe ${semana} — Bodega HM Tobalaba</title><style>body{font-family:Arial,sans-serif;margin:0;padding:20px;color:#1A1A1A}@media print{body{padding:10px}.no-print{display:none}button{display:none}}</style></head><body>
-  <div style="text-align:center;margin-bottom:20px"><div style="background:#085041;color:#fff;padding:12px 20px;border-radius:8px;display:inline-block;margin-bottom:8px"><div style="font-size:18px;font-weight:700">BODEGA BARRA — HOLY MOLY TOBALABA</div><div style="font-size:13px;margin-top:4px">Informe Semanal ${semana}  ·  ${fechas}</div></div><div style="font-size:11px;color:#888;margin-top:6px">Generado por: ${usr.nombre}  ·  ${new Date().toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div></div>
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
-    <div style="background:#FAECE7;border:1px solid #F5C4B3;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:#993C1D;font-weight:600;text-transform:uppercase">Total Salidas</div><div style="font-size:28px;font-weight:700;color:#993C1D">${totSal}</div></div>
-    <div style="background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:#3B6D11;font-weight:600;text-transform:uppercase">Total Entradas</div><div style="font-size:28px;font-weight:700;color:#3B6D11">${totEnt}</div></div>
-    <div style="background:#FAEEDA;border:1px solid #FAC775;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:#854F0B;font-weight:600;text-transform:uppercase">Total Mermas</div><div style="font-size:28px;font-weight:700;color:#854F0B">${totMer}</div></div>
-    <div style="background:#EEEDFE;border:1px solid #CECBF6;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:#533AB7;font-weight:600;text-transform:uppercase">Total Traspasos</div><div style="font-size:28px;font-weight:700;color:#533AB7">${totTras}</div></div>
-  </div>
-  <table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:#2C2C2A;color:#fff"><th style="padding:7px 8px;text-align:left">Producto</th><th style="padding:7px 8px;text-align:center">Unidad</th><th style="padding:7px 8px;text-align:center;color:#9FE1CB">Stock Inicial</th><th style="padding:7px 8px;text-align:center;color:#C0DD97">+ Entradas</th><th style="padding:7px 8px;text-align:center;color:#F5C4B3">− Salidas</th><th style="padding:7px 8px;text-align:center;color:#FAC775">− Mermas</th><th style="padding:7px 8px;text-align:center;color:#CECBF6">↔ Traspasos</th><th style="padding:7px 8px;text-align:center;color:#9FE1CB">Stock Final</th></tr></thead><tbody>${tablas}</tbody></table>
-  <div style="margin-top:20px;font-size:10px;color:#888;text-align:center;border-top:1px solid #eee;padding-top:10px">Holy Moly Tobalaba · Bodega Barra · ${semana} · ${fechas} · ${movs.length} movimientos registrados</div>
-  <div class="no-print" style="margin-top:20px;text-align:center"><button onclick="window.print()" style="background:#085041;color:#fff;border:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">🖨 Imprimir / Guardar PDF</button><button onclick="window.close()" style="background:#F1EFE8;color:#1A1A1A;border:1px solid #ccc;padding:12px 20px;border-radius:8px;font-size:14px;margin-left:10px;cursor:pointer">Cerrar</button></div>
-  </body></html>`;
+  const html=`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Informe ${semana} — Bodega HM Tobalaba</title><style>body{font-family:Arial,sans-serif;margin:0;padding:20px;color:#1A1A1A}@media print{body{padding:10px}.no-print{display:none}button{display:none}}</style></head><body><div style="text-align:center;margin-bottom:20px"><div style="background:#085041;color:#fff;padding:12px 20px;border-radius:8px;display:inline-block;margin-bottom:8px"><div style="font-size:18px;font-weight:700">BODEGA BARRA — HOLY MOLY TOBALABA</div><div style="font-size:13px;margin-top:4px">Informe Semanal ${semana}  ·  ${fechas}</div></div><div style="font-size:11px;color:#888;margin-top:6px">Generado por: ${usr.nombre}  ·  ${new Date().toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div></div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px"><div style="background:#FAECE7;border:1px solid #F5C4B3;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:#993C1D;font-weight:600;text-transform:uppercase">Total Salidas</div><div style="font-size:28px;font-weight:700;color:#993C1D">${totSal}</div></div><div style="background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:#3B6D11;font-weight:600;text-transform:uppercase">Total Entradas</div><div style="font-size:28px;font-weight:700;color:#3B6D11">${totEnt}</div></div><div style="background:#FAEEDA;border:1px solid #FAC775;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:#854F0B;font-weight:600;text-transform:uppercase">Total Mermas</div><div style="font-size:28px;font-weight:700;color:#854F0B">${totMer}</div></div><div style="background:#EEEDFE;border:1px solid #CECBF6;border-radius:8px;padding:10px;text-align:center"><div style="font-size:10px;color:#533AB7;font-weight:600;text-transform:uppercase">Total Traspasos</div><div style="font-size:28px;font-weight:700;color:#533AB7">${totTras}</div></div></div><table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr style="background:#2C2C2A;color:#fff"><th style="padding:7px 8px;text-align:left">Producto</th><th style="padding:7px 8px;text-align:center">Unidad</th><th style="padding:7px 8px;text-align:center;color:#9FE1CB">Stock Inicial</th><th style="padding:7px 8px;text-align:center;color:#C0DD97">+ Entradas</th><th style="padding:7px 8px;text-align:center;color:#F5C4B3">− Salidas</th><th style="padding:7px 8px;text-align:center;color:#FAC775">− Mermas</th><th style="padding:7px 8px;text-align:center;color:#CECBF6">↔ Traspasos</th><th style="padding:7px 8px;text-align:center;color:#9FE1CB">Stock Final</th></tr></thead><tbody>${tablas}</tbody></table><div style="margin-top:20px;font-size:10px;color:#888;text-align:center;border-top:1px solid #eee;padding-top:10px">Holy Moly Tobalaba · Bodega Barra · ${semana} · ${fechas} · ${movs.length} movimientos registrados</div><div class="no-print" style="margin-top:20px;text-align:center"><button onclick="window.print()" style="background:#085041;color:#fff;border:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">🖨 Imprimir / Guardar PDF</button><button onclick="window.close()" style="background:#F1EFE8;color:#1A1A1A;border:1px solid #ccc;padding:12px 20px;border-radius:8px;font-size:14px;margin-left:10px;cursor:pointer">Cerrar</button></div></body></html>`;
   const blob=new Blob([html],{type:'text/html;charset=utf-8'});
   const url=URL.createObjectURL(blob);
   const win=window.open(url,'_blank');
