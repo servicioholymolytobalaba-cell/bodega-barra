@@ -161,19 +161,7 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
     <div class="field-grp">
       <div class="field-lbl">Usuario</div>
       <select id="sel-usr">
-        <option value="">Selecciona tu nombre...</option>
-        <optgroup label="Encargados">
-          <option value="Jorge|encargado|1234">Jorge</option>
-          <option value="Carlos P|encargado|4321">Carlos P</option>
-          <option value="Nadeska|encargado|1111">Nadeska</option>
-          <option value="Angela|encargado|9876">Angela</option>
-          <option value="Claudio|encargado|6789">Claudio</option>
-        </optgroup>
-        <optgroup label="Bartenders">
-          <option value="Bartender 1|bartender|0111">Bartender 1</option>
-          <option value="Bartender 2|bartender|0222">Bartender 2</option>
-          <option value="Bartender 3|bartender|0333">Bartender 3</option>
-        </optgroup>
+        <option value="">Cargando...</option>
       </select>
     </div>
     <div class="field-grp">
@@ -286,32 +274,54 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
 <div class="toast" id="toast"></div>
 
 <script>
-const SCRIPT_URL="https://script.google.com/macros/s/AKfycbwSnG3bsdeknzuPcgFb3rDoWeD_WC1jCMGoKS4TxS9HxYV3vMOutyjDt2xhytTF4axB1A/exec";
+// Reemplaza esta URL por la del deployment de Apps Script (Sheet nuevo).
+// El mismo deployment atiende tanto GET (?accion=...) como POST (registro de movimientos).
+const SCRIPT_URL="https://script.google.com/macros/s/AKfycbzieiX46vBNj7se4ubGNzkhpgPdY66-A6lagwV3ItRpptV3KEwGoTOXrt3IbTtS3rku/exec";
 const CATS=["Todos","Cerveza","Vino","Ron","Pisco","Whisky","Whiskey","Tequila","Mezcal","Gin","Vodka","Licor","Bitter","Cognac","Sin Alcohol","Bebida","Frutas","Insumos"];
 const TIPOS_ENC=[{id:"salida",label:"Salida",icon:"ti-arrow-up"},{id:"entrada",label:"Entrada",icon:"ti-arrow-down"},{id:"merma",label:"Merma",icon:"ti-alert-triangle"},{id:"traspaso",label:"Traspaso",icon:"ti-arrows-exchange"},{id:"correccion",label:"Corrección",icon:"ti-edit"}];
 const TIPOS_BAR=[{id:"salida",label:"Salida",icon:"ti-arrow-up"}];
-const PRODS=[
-  ["Cerveza","Calafate","barril",1],["Cerveza","Corta Corriente","barril",0],["Cerveza","Entrenubes LOA","barril",1],["Cerveza","Estrella","barril",0],["Cerveza","Kross Golden","barril",1],["Cerveza","Otra Ronda LOA","barril",0],["Cerveza","Cerveza Sin Alcohol 0,33L","botella",12],["Cerveza","Kross Stout 0,33L","botella",45],["Cerveza","CO2 CCU","unidad",1],["Cerveza","CO2 Estrella VCT","unidad",0],["Cerveza","CO2 Kross","unidad",2],
-  ["Vino","Amigo Perro CS","botella",13],["Vino","Amigo Perro SB","botella",4],["Vino","Bodega Uno CS","bidón",6],["Vino","Calyptra Vivendo RS","botella",0],["Vino","Espumante","botella",0],
-  ["Ron","Bacardi 8 años 0,75L","botella",1],["Ron","Bacardi Añejo 0,98L","botella",5],["Ron","Bacardi Blanco 1,75L","botella",18],["Ron","Bacardi Coco 0,75L","botella",13],["Ron","Bacardi Manzana 0,7L","botella",16],["Ron","Malibu 0,75L","botella",0],
-  ["Pisco","Alto del Carmen 35° 1,5L","botella",10],["Pisco","Alto del Carmen 40° 0,75L","botella",1],["Pisco","Bou Legado 46°","botella",0],["Pisco","Bou Transparente 40°","botella",2],["Pisco","Gobernador 35°","botella",7],["Pisco","Gobernador 40°","botella",13],["Pisco","Horcon Quemado 40°","botella",1],["Pisco","Mistral Nobel 40°","botella",0],
-  ["Whisky","Ballantines Finest 1,5L","botella",0],["Whisky","Buchanan 0,75L","botella",0],["Whisky","Chivas Regal 12 0,75L","botella",0],["Whisky","Jameson 0,75L","botella",1],["Whisky","Johnnie Walker Black 0,75L","botella",0],
-  ["Whiskey","Gentleman Jack 0,75L","botella",0],["Whiskey","Jack Daniel's Honey 0,75L","botella",1],["Whiskey","Jack Daniel's N°7 0,75L","botella",1],["Whiskey","Wild Turkey 0,75L","botella",0],
-  ["Tequila","Don Julio Blanco 0,75L","botella",1],["Tequila","Jose Cuervo Reposado 0,75L","botella",3],["Tequila","Jose Cuervo Silver 0,75L","botella",6],
-  ["Mezcal","Ojo de Tigre 0,75L","botella",1],
-  ["Gin","Beefeater 0,75L","botella",2],["Gin","Bombay Sapphire 0,75L","botella",0],["Gin","Bombay Sapphire 1,75L","botella",13],["Gin","Hendricks 0,7L","botella",2],["Gin","Lord Kiltrow 0,75L","botella",0],["Gin","Provincia 0,7L","botella",1],
-  ["Vodka","Absolut 0,75L","botella",4],["Vodka","Absolut Citron 0,75L","botella",1],["Vodka","Absolut Pear 0,75L","botella",1],["Vodka","Absolut Raspberry 0,75L","botella",1],["Vodka","Grey Goose 0,75L","botella",3],["Vodka","Stolichnaya 1L","botella",1],["Vodka","Wyborowa 1L","botella",11],
-  ["Licor","Aperol 1L","botella",12],["Licor","Blue Curacao Bols 0,75L","botella",6],["Licor","Cachaça 51 0,965L","botella",3],["Licor","Campari 0,75L","botella",4],["Licor","Amaretto Disaronno 0,7L","botella",1],["Licor","Drambuie 0,75L","botella",2],["Licor","Frangelico 0,75L","botella",1],["Licor","Kahlúa 0,75L","botella",1],["Licor","Licor de Saúco Bols 0,7L","botella",1],["Licor","Luxardo Maraschino 0,75L","botella",2],["Licor","Ramazzotti 0,7L","botella",3],["Licor","St. Germain 0,75L","botella",5],["Licor","Triple Sec 0,75L","botella",3],
-  ["Bitter","Amargo Angostura 0,1L","botella",0],["Bitter","Araucano 0,9L","botella",0],["Bitter","Fernet Branca 1L","botella",1],["Bitter","Jagermeister 0,7L","botella",2],["Bitter","Martini Bianco 0,75L","botella",9],["Bitter","Martini Dry 0,75L","botella",0],["Bitter","Martini Rosso 0,75L","botella",5],
-  ["Cognac","Hennessy V.S. 0,7L","botella",0],
-  ["Sin Alcohol","Disco S/A 0,7L","botella",4],["Sin Alcohol","Espumante S/A 0,75L","botella",3],["Sin Alcohol","Gin S/A 0,7L","botella",1],["Sin Alcohol","Vino S/A 0,75L","botella",3],["Sin Alcohol","Zerozotti S/A 0,7L","botella",0],
-  ["Bebida","Red Bull Normal 250ml","unidad",47],["Bebida","Red Bull Tropical 250ml","unidad",18],["Bebida","Thomas Henry Ginger Beer 200ml","unidad",58],["Bebida","Thomas Henry Pomelo 200ml","unidad",8],["Bebida","Thomas Henry Tónica 200ml","unidad",20],
-  ["Frutas","Arándanos congelados","kg",0],["Frutas","Frutillas congeladas","kg",0],["Frutas","Moras congeladas","kg",0],["Frutas","Piña (pulpa)","kg",0],["Frutas","Pulpa Maracuyá","kg",0],
-  ["Insumos","Azúcar blanca granulada","kg",0],["Insumos","Crema de coco López","unidad",2],["Insumos","Leche","litro",0],["Insumos","Leche condensada","unidad",0],["Insumos","Salsa Inglesa","unidad",2],["Insumos","Tabasco","unidad",8],["Insumos","Albumina","unidad",1],["Insumos","Sucralosa","unidad",8],["Insumos","Cerezas","unidad",1],["Insumos","Syrup Hershey","unidad",1],["Insumos","Té Negro Iced Tea","unidad",5],["Insumos","Flor de Jamaica","unidad",0],["Insumos","Syrup Horchata","unidad",1],["Insumos","Syrup Vainilla","unidad",1],["Insumos","Syrup Caramelo","unidad",1],
-  ["Insumos","Cápsulas de Café","unidad",5]
-];
 
-let stk=PRODS.map(p=>({cat:p[0],nombre:p[1],unidad:p[2],s:p[3]}));
+let stk=[]; // se llena en vivo desde el Sheet (accion=stock)
+let USUARIOS_APP=[]; // se llena en vivo desde el Sheet (accion=usuarios)
+let SEMANA_ACTUAL='S27'; // se actualiza al cargar (accion=stock trae la semana calculada por el Sheet)
+
+async function cargarDatosIniciales(){
+  const selUsr=document.getElementById('sel-usr');
+  try{
+    const [rStock,rUsr]=await Promise.all([
+      fetch(SCRIPT_URL+"?accion=stock"),
+      fetch(SCRIPT_URL+"?accion=usuarios")
+    ]);
+    const dStock=await rStock.json();
+    const dUsr=await rUsr.json();
+    if(dStock.status==='ok'){
+      stk=dStock.productos.map(p=>({cat:p.categoria,nombre:p.nombre,unidad:p.unidad,s:Number(p.stock)||0}));
+      SEMANA_ACTUAL=dStock.semana||'S27';
+    } else {
+      throw new Error(dStock.msg||'Error al leer stock');
+    }
+    if(dUsr.status==='ok'){
+      USUARIOS_APP=dUsr.usuarios;
+      const encargados=USUARIOS_APP.filter(u=>u.rol==='encargado');
+      const bartenders=USUARIOS_APP.filter(u=>u.rol==='bartender');
+      let html='<option value="">Selecciona tu nombre...</option>';
+      if(encargados.length){
+        html+='<optgroup label="Encargados">'+encargados.map(u=>`<option value="${u.nombre}|${u.rol}|${u.pin}">${u.nombre}</option>`).join('')+'</optgroup>';
+      }
+      if(bartenders.length){
+        html+='<optgroup label="Bartenders">'+bartenders.map(u=>`<option value="${u.nombre}|${u.rol}|${u.pin}">${u.nombre}</option>`).join('')+'</optgroup>';
+      }
+      selUsr.innerHTML=html;
+    } else {
+      throw new Error(dUsr.msg||'Error al leer usuarios');
+    }
+  }catch(err){
+    selUsr.innerHTML='<option value="">Error al cargar — recarga la página</option>';
+    toast('No se pudo conectar al Sheet. Verifica tu conexión y recarga.','err');
+  }
+}
+cargarDatosIniciales();
+
 let movs=[],pin='',usr=null,cat='Todos',sel=null,tipo='salida',turno='AM';
 
 function pk(k){
@@ -521,33 +531,24 @@ function goTab(t){
 }
 
 
-const SCRIPT_URL_GET = "https://script.google.com/macros/s/AKfycbwSnG3bsdeknzuPcgFb3rDoWeD_WC1jCMGoKS4TxS9HxYV3vMOutyjDt2xhytTF4axB1A/exec";
-
-const SEMANA_ACTUAL = (() => {
-  const hoy = new Date();
-  const d = hoy.toISOString().slice(0,10);
-  const mapa = {
-    "2026-06-29":"S27","2026-06-30":"S27","2026-07-01":"S27","2026-07-02":"S27",
-    "2026-07-03":"S27","2026-07-04":"S27","2026-07-05":"S27",
-    "2026-07-06":"S28","2026-07-07":"S28","2026-07-08":"S28","2026-07-09":"S28",
-    "2026-07-10":"S28","2026-07-11":"S28","2026-07-12":"S28",
-    "2026-07-13":"S29","2026-07-14":"S29","2026-07-15":"S29","2026-07-16":"S29",
-    "2026-07-17":"S29","2026-07-18":"S29","2026-07-19":"S29",
-    "2026-07-20":"S30","2026-07-21":"S30","2026-07-22":"S30","2026-07-23":"S30",
-    "2026-07-24":"S30","2026-07-25":"S30","2026-07-26":"S30",
-    "2026-07-27":"S31","2026-07-28":"S31","2026-07-29":"S31","2026-07-30":"S31",
-    "2026-07-31":"S31","2026-08-01":"S31","2026-08-02":"S31"
-  };
-  return mapa[d] || "S27";
-})();
+// SEMANA_ACTUAL ya se declaró más arriba (junto a stk) y se actualiza al
+// cargar la app con la semana que calcula el Sheet — no depende de un mapa
+// de fechas que se agote.
 
 async function abrirInforme() {
   if(!usr || usr.rol !== 'encargado') { toast('Solo encargados pueden generar el informe','err'); return; }
+  const numActual = parseInt(SEMANA_ACTUAL.replace('S',''), 10) || 27;
+  const respuesta = prompt('¿Informe de qué semana? (ej: S27)\nSemana actual: ' + SEMANA_ACTUAL, SEMANA_ACTUAL);
+  if(respuesta === null) return; // canceló
+  let semanaPedida = respuesta.trim().toUpperCase();
+  if(!/^S\d+$/.test(semanaPedida)){ toast('Formato inválido. Usa por ejemplo S27.','err'); return; }
+  const numPedida = parseInt(semanaPedida.replace('S',''), 10);
+  if(numPedida > numActual){ toast('Esa semana todavía no existe.','err'); return; }
   const btn = document.getElementById('btn-informe');
   btn.innerHTML = '<i class="ti ti-loader"></i> Consultando Google Sheets...';
   btn.disabled = true;
   try {
-    const url = SCRIPT_URL_GET + "?accion=informe&semana=" + SEMANA_ACTUAL;
+    const url = SCRIPT_URL + "?accion=informe&semana=" + semanaPedida;
     const resp = await fetch(url);
     const data = await resp.json();
     if(data.status !== 'ok') throw new Error(data.msg||'Error');
@@ -563,6 +564,7 @@ function generarPDFSemanal(data) {
   const movs = data.movimientos || [];
   const semana = data.semana || SEMANA_ACTUAL;
   const fechas = data.fechas || "";
+  const bases = data.bases || {};
 
   // Agrupar por producto
   const productos = {};
@@ -578,10 +580,6 @@ function generarPDFSemanal(data) {
     else if(m.tipo==='corrección'||m.tipo==='correccion') p.correcciones += Number(m.cantidad);
   });
 
-  // Stock inicial por producto (desde PRODS base)
-  const stockBase = {};
-  stk.forEach(p => { stockBase[p.nombre] = { base: p.s + (productos[p.nombre]?.salidas||0) + (productos[p.nombre]?.mermas||0) + (productos[p.nombre]?.traspasos||0) - (productos[p.nombre]?.entradas||0), unidad: p.unidad }; });
-
   // Totales generales
   let totEnt=0, totSal=0, totMer=0, totTras=0;
   Object.values(productos).forEach(p => { totEnt+=p.entradas; totSal+=p.salidas; totMer+=p.mermas; totTras+=p.traspasos; });
@@ -593,19 +591,21 @@ function generarPDFSemanal(data) {
     const prods = stk.filter(p => p.cat === cat);
     const filas = prods.map(p => {
       const m = productos[p.nombre] || {entradas:0,salidas:0,mermas:0,traspasos:0};
-      const base = (stockBase[p.nombre]?.base ?? p.s);
-      const final = base + m.entradas - m.salidas - m.mermas - m.traspasos;
+      const baseInfo = bases[p.nombre];
+      const base = baseInfo ? baseInfo.base : null; // viene del Sheet, no se reconstruye acá
+      const baseTxt = (base===null || base===undefined) ? 'N/D' : base;
+      const final = (base===null || base===undefined) ? 'N/D' : (base + m.entradas - m.salidas - m.mermas - m.traspasos);
       const hayMov = m.entradas||m.salidas||m.mermas||m.traspasos;
       const rowStyle = hayMov ? 'background:#F0FBF5' : '';
       return `<tr style="${rowStyle}">
         <td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee">${p.nombre}</td>
         <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee">${p.unidad}</td>
-        <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;font-weight:600;color:#0000CC">${base}</td>
+        <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;font-weight:600;color:#0000CC">${baseTxt}</td>
         <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;color:#3B6D11;font-weight:${m.entradas?'700':'400'}">${m.entradas||'—'}</td>
         <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;color:#993C1D;font-weight:${m.salidas?'700':'400'}">${m.salidas||'—'}</td>
         <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;color:#854F0B;font-weight:${m.mermas?'700':'400'}">${m.mermas||'—'}</td>
         <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;color:#533AB7;font-weight:${m.traspasos?'700':'400'}">${m.traspasos||'—'}</td>
-        <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;font-weight:700;color:${final<=0?'#A32D2D':'#085041'}">${final}</td>
+        <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;font-weight:700;color:${final==='N/D'?'#888':(final<=0?'#A32D2D':'#085041')}">${final}</td>
       </tr>`;
     }).join('');
     tablas += `
