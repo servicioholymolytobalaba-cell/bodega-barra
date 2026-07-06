@@ -205,6 +205,7 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
     <button class="nav-tab active" onclick="goTab('registro')"><i class="ti ti-edit"></i> Registro</button>
     <button class="nav-tab" onclick="goTab('historial')"><i class="ti ti-list"></i> Historial</button>
     <button class="nav-tab" onclick="goTab('stock')"><i class="ti ti-chart-bar"></i> Stock</button>
+    <button class="nav-tab" onclick="goTab('pedidos')"><i class="ti ti-shopping-cart"></i> Pedidos</button>
   </div>
 
   <!-- REGISTRO -->
@@ -268,6 +269,14 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
       <i class="ti ti-download"></i> Descargar movimientos del día
     </button>
     <div id="stk-list"></div>
+  </div>
+
+  <!-- PEDIDOS -->
+  <div id="tab-pedidos" class="tab-body" style="display:none">
+    <div class="banner banner-ok">
+      <i class="ti ti-cloud"></i> Conectado a Google Sheets en tiempo real
+    </div>
+    <div id="ped-list"><div class="empty">Cargando pedidos...</div></div>
   </div>
 </div>
 
@@ -521,13 +530,55 @@ function descargar(){
   toast('Informe descargado','ok');
 }
 
+let PED=[]; // se llena en vivo desde el Sheet (accion=pedidos), carga perezosa al abrir la pestaña
+let pedCargado=false;
+
 function goTab(t){
-  ['registro','historial','stock'].forEach(id=>{
+  ['registro','historial','stock','pedidos'].forEach(id=>{
     document.getElementById('tab-'+id).style.display=id===t?'block':'none';
   });
   document.querySelectorAll('.nav-tab').forEach((btn,i)=>{
-    btn.classList.toggle('active',['registro','historial','stock'][i]===t);
+    btn.classList.toggle('active',['registro','historial','stock','pedidos'][i]===t);
   });
+  if(t==='pedidos' && !pedCargado) cargarPedidos();
+}
+
+async function cargarPedidos(){
+  const el=document.getElementById('ped-list');
+  try{
+    const r=await fetch(SCRIPT_URL+"?accion=pedidos");
+    const d=await r.json();
+    if(d.status!=='ok') throw new Error(d.msg||'Error');
+    PED=d.pedidos||[];
+    pedCargado=true;
+    renderPedidos();
+  }catch(e){
+    el.innerHTML='<div class="empty">No se pudo cargar pedidos — recarga la página</div>';
+  }
+}
+
+function renderPedidos(){
+  const el=document.getElementById('ped-list');
+  const conSugerido=PED.filter(p=>Number(p.pedidoSugerido)>0);
+  if(!PED.length){el.innerHTML='<div class="empty">Sin datos en la hoja PEDIDOS</div>';return;}
+  const cats=[...new Set(PED.map(p=>p.categoria))];
+  let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px">
+    <span style="font-size:13px;font-weight:700">Pedido sugerido</span>
+    <span style="font-size:11px;color:var(--text3)">${conSugerido.length} producto(s) bajo mínimo</span>
+  </div>`;
+  cats.forEach(c=>{
+    const prods=PED.filter(p=>p.categoria===c);
+    html+=`<div class="stk-cat-lbl">${c}</div>`;
+    prods.forEach(p=>{
+      const sugerido=Number(p.pedidoSugerido)||0;
+      const bajoMinimo=sugerido>0;
+      html+=`<div class="stk-row" style="${bajoMinimo?'background:#FAECE7':''}">
+        <span class="stk-nombre">${p.nombre}<br><span style="font-size:10px;color:var(--text3)">Actual: ${p.stockActual} ${p.unidad} · Mín: ${p.minimo} · Máx: ${p.maximo}</span></span>
+        <span class="stk-qty ${bajoMinimo?'s-zero':'s-ok'}">${bajoMinimo?'Pedir '+sugerido:'OK'} ${p.unidad}</span>
+      </div>`;
+    });
+  });
+  el.innerHTML=html;
 }
 
 
@@ -593,8 +644,10 @@ function generarPDFSemanal(data) {
       const m = productos[p.nombre] || {entradas:0,salidas:0,mermas:0,traspasos:0};
       const baseInfo = bases[p.nombre];
       const base = baseInfo ? baseInfo.base : null; // viene del Sheet, no se reconstruye acá
+      const volumenL = baseInfo ? baseInfo.volumenL : null;
       const baseTxt = (base===null || base===undefined) ? 'N/D' : base;
       const final = (base===null || base===undefined) ? 'N/D' : (base + m.entradas - m.salidas - m.mermas - m.traspasos);
+      const finalLitrosTxt = (final==='N/D') ? '—' : (volumenL ? (final*volumenL).toFixed(2)+' L' : '—');
       const hayMov = m.entradas||m.salidas||m.mermas||m.traspasos;
       const rowStyle = hayMov ? 'background:#F0FBF5' : '';
       return `<tr style="${rowStyle}">
@@ -606,10 +659,11 @@ function generarPDFSemanal(data) {
         <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;color:#854F0B;font-weight:${m.mermas?'700':'400'}">${m.mermas||'—'}</td>
         <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;color:#533AB7;font-weight:${m.traspasos?'700':'400'}">${m.traspasos||'—'}</td>
         <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;font-weight:700;color:${final==='N/D'?'#888':(final<=0?'#A32D2D':'#085041')}">${final}</td>
+        <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;color:#666">${finalLitrosTxt}</td>
       </tr>`;
     }).join('');
     tablas += `
-      <tr><td colspan="8" style="padding:6px 8px;background:#085041;color:#fff;font-size:11px;font-weight:700;letter-spacing:.05em">${cat.toUpperCase()}</td></tr>
+      <tr><td colspan="9" style="padding:6px 8px;background:#085041;color:#fff;font-size:11px;font-weight:700;letter-spacing:.05em">${cat.toUpperCase()}</td></tr>
       ${filas}`;
   });
 
@@ -660,6 +714,7 @@ function generarPDFSemanal(data) {
         <th style="padding:7px 8px;text-align:center;color:#FAC775">− Mermas</th>
         <th style="padding:7px 8px;text-align:center;color:#CECBF6">↔ Traspasos</th>
         <th style="padding:7px 8px;text-align:center;color:#9FE1CB">Stock Final</th>
+        <th style="padding:7px 8px;text-align:center;color:#CCC">Equiv. Litros</th>
       </tr>
     </thead>
     <tbody>${tablas}</tbody>
