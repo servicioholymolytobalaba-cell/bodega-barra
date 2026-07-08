@@ -647,7 +647,7 @@ function generarPDFSemanal(data) {
       const volumenL = baseInfo ? baseInfo.volumenL : null;
       const baseTxt = (base===null || base===undefined) ? 'N/D' : base;
       const final = (base===null || base===undefined) ? 'N/D' : (base + m.entradas - m.salidas - m.mermas - m.traspasos);
-      const finalLitrosTxt = (final==='N/D') ? '—' : (volumenL ? (final*volumenL).toFixed(2)+' L' : '—');
+      const finalLitrosTxt = (final==='N/D') ? '—' : (volumenL ? (final*volumenL).toFixed(2) : '—'); // sin sufijo: puede ser L o kg según el producto
       const hayMov = m.entradas||m.salidas||m.mermas||m.traspasos;
       const rowStyle = hayMov ? 'background:#F0FBF5' : '';
       return `<tr style="${rowStyle}">
@@ -714,7 +714,7 @@ function generarPDFSemanal(data) {
         <th style="padding:7px 8px;text-align:center;color:#FAC775">− Mermas</th>
         <th style="padding:7px 8px;text-align:center;color:#CECBF6">↔ Traspasos</th>
         <th style="padding:7px 8px;text-align:center;color:#9FE1CB">Stock Final</th>
-        <th style="padding:7px 8px;text-align:center;color:#CCC">Equiv. Litros</th>
+        <th style="padding:7px 8px;text-align:center;color:#CCC">Equiv. (L/kg)</th>
       </tr>
     </thead>
     <tbody>${tablas}</tbody>
