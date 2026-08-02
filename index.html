@@ -2,11 +2,11 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="Bodega HM">
-<title>Bodega Barra — Holy Moly Tobalaba</title>
+<meta name="apple-mobile-web-app-title" content="HMT OPS">
+<title>HMT OPS — Holy Moly Tobalaba</title>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -19,7 +19,7 @@
   --gray:#2C2C2A;--gray-m:#888780;--gray-c:#F1EFE8;
   --red-c:#FCEBEB;--red-t:#A32D2D;
   --bg:#F8F8F6;--card:#FFFFFF;--border:#E0DED8;
-  --text:#1A1A1A;--text2:#5F5E5A;--text3:#888780;
+  --text:#1A1A1A;--text2:#5F5E5A;--text3:#6B6A64;
   --radius:10px;
 }
 body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;max-width:430px;margin:0 auto}
@@ -32,14 +32,18 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 .date-lbl{font-size:11px;color:var(--text3)}
 
 /* NAV */
-.nav-tabs{display:flex;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:56px;z-index:99}
-.nav-tab{flex:1;height:44px;border:none;background:none;font-size:12px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2.5px solid transparent;font-family:inherit}
+.nav-tabs{display:flex;background:#fff;border-bottom:1px solid var(--border);position:sticky;top:56px;z-index:99;overflow-x:auto;scrollbar-width:none}
+.nav-tabs::-webkit-scrollbar{display:none}
+.nav-tab{flex:1;min-width:84px;height:44px;border:none;background:none;font-size:12px;font-weight:600;color:var(--text3);cursor:pointer;border-bottom:2.5px solid transparent;font-family:inherit;white-space:nowrap;padding:0 10px;position:relative}
 .nav-tab.active{color:var(--teal);border-bottom-color:var(--teal)}
+.nav-badge{position:absolute;top:5px;right:6px;background:var(--coral-m);color:#fff;font-size:9px;font-weight:700;min-width:15px;height:15px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px}
 
 /* LOGIN */
 #scr-login{padding:20px 16px}
 .login-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:24px}
-.login-logo{width:56px;height:56px;background:var(--teal-c);border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;font-size:28px;color:var(--teal)}
+.hm-logo{text-align:center;margin:2px auto 16px;user-select:none}
+.hm-logo .hm-name{font-family:'Arial Black','Segoe UI',sans-serif;font-size:36px;font-weight:900;letter-spacing:.5px;color:var(--text);line-height:1;text-transform:uppercase}
+.hm-logo .hm-sub{font-size:11px;font-weight:700;letter-spacing:3.5px;color:var(--text2);margin-top:6px;text-transform:uppercase}
 .login-title{font-size:18px;font-weight:700;text-align:center;margin-bottom:3px;color:var(--teal)}
 .login-sub{font-size:12px;color:var(--text3);text-align:center;margin-bottom:22px}
 .field-lbl{font-size:12px;color:var(--text2);margin-bottom:5px;font-weight:600}
@@ -61,9 +65,10 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
 .banner{display:flex;align-items:center;gap:7px;padding:9px 12px;border-radius:var(--radius);font-size:12px;margin-bottom:10px}
 .banner-warn{background:var(--amber-c);color:var(--amber);border:1px solid #FAC775}
 .banner-ok{background:var(--teal-c);color:var(--teal);border:1px solid #9FE1CB}
+.banner-info{background:var(--purple-c);color:var(--purple);border:1px solid #CECBF6}
 
 /* CATEGORÍAS */
-.cat-scroll{display:flex;gap:7px;overflow-x:auto;padding:10px 0 4px;scrollbar-width:none;position:sticky;top:100px;z-index:98;background:var(--bg);margin:0 -16px;padding-left:16px;padding-right:8px}
+.cat-scroll{display:flex;gap:7px;overflow-x:auto;padding:10px 0 4px;scrollbar-width:none;background:var(--bg);margin:0 -16px;padding-left:16px;padding-right:8px}
 .cat-scroll::-webkit-scrollbar{display:none}
 .chip{flex-shrink:0;padding:6px 13px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:12px;color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:500}
 .chip.active{background:var(--teal);border-color:var(--teal);color:#fff}
@@ -94,6 +99,7 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
 .tipo-btn.t-traspaso{background:var(--purple-c);border-color:#AFA9EC;color:var(--purple)}
 .tipo-btn.t-correccion{background:var(--gray-c);border-color:#B4B2A9;color:var(--gray)}
 .sec-lbl{font-size:11px;color:var(--text2);font-weight:600;margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
+.sec-lbl .req-star{color:var(--red-t)}
 .turno-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:13px}
 .turno-btn{height:38px;border-radius:var(--radius);border:1.5px solid var(--border);background:#fff;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;font-family:inherit;transition:all .1s}
 .turno-btn.active{background:var(--teal);border-color:var(--teal);color:#fff}
@@ -103,8 +109,11 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
 .qty-inp{flex:1;height:46px;text-align:center;font-size:22px;font-weight:700;border-radius:var(--radius);border:1.5px solid var(--border);background:#fff;color:var(--text);font-family:inherit}
 .qty-inp:focus{outline:none;border-color:var(--teal)}
 .qty-unit{font-size:11px;color:var(--text3);min-width:32px;font-weight:500}
-.note-inp{width:100%;height:60px;border-radius:var(--radius);border:1.5px solid var(--border);background:#fff;color:var(--text);padding:9px 12px;font-size:13px;font-family:inherit;resize:none;margin-bottom:13px}
+.note-inp{width:100%;height:60px;border-radius:var(--radius);border:1.5px solid var(--border);background:#fff;color:var(--text);padding:9px 12px;font-size:13px;font-family:inherit;resize:none;margin-bottom:4px}
 .note-inp:focus{outline:none;border-color:var(--teal)}
+.note-inp.invalid{border-color:#F09595}
+.note-hint{font-size:10px;color:var(--text3);margin-bottom:13px;min-height:14px}
+.note-hint.bad{color:var(--red-t)}
 .btn-conf{width:100%;height:50px;border-radius:var(--radius);color:#fff;font-size:15px;font-weight:700;border:none;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:7px;transition:opacity .1s}
 .btn-conf:active{opacity:.85}
 .btn-conf:disabled{opacity:.4;cursor:not-allowed}
@@ -113,7 +122,11 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
 .btn-conf.merma{background:#BA7517}
 .btn-conf.traspaso{background:#7F77DD}
 .btn-conf.correccion{background:var(--gray)}
+.btn-conf.teal{background:var(--teal-m)}
 .sending{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;font-size:13px;color:var(--text3)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.sending .ti-loader,.spin{animation:spin 1s linear infinite;display:inline-block}
+.retry-btn{margin-top:10px;height:42px;padding:0 20px;border-radius:var(--radius);border:1.5px solid var(--teal);background:#fff;color:var(--teal);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit}
 
 /* HISTORIAL */
 .hist-item{background:#fff;border:1.5px solid var(--border);border-radius:var(--radius);padding:11px 13px;margin-bottom:7px}
@@ -125,9 +138,13 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
 .badge.merma{background:var(--amber-c);color:var(--amber)}
 .badge.traspaso{background:var(--purple-c);color:var(--purple)}
 .badge.correccion{background:var(--gray-c);color:var(--gray)}
+.badge.pendiente{background:var(--amber-c);color:var(--amber)}
+.badge.aprobado{background:var(--green-c);color:var(--green)}
+.badge.rechazado{background:var(--red-c);color:var(--red-t)}
 .hist-meta{font-size:10px;color:var(--text3);margin-bottom:3px}
 .hist-sync{font-size:10px;display:flex;align-items:center;gap:4px}
 .sync-ok{color:var(--green)}.sync-err{color:var(--red-t)}
+.folio-tag{font-size:10px;font-weight:700;color:var(--teal);background:var(--teal-c);padding:2px 7px;border-radius:8px;margin-right:5px}
 
 /* STOCK */
 .stat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
@@ -141,8 +158,30 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
 .stk-nombre{font-size:12px;color:var(--text)}
 .stk-qty{font-size:12px;font-weight:700}
 
+/* CONTEO SALÓN */
+.cnt-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:6px}
+.cnt-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.cnt-name{font-size:13px;font-weight:600}
+.cnt-prev{font-size:10px;color:var(--text3)}
+.cnt-inputs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;align-items:end}
+.cnt-inputs.solo{grid-template-columns:1fr 1fr}
+.cnt-lbl{font-size:11px;color:var(--text2);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;text-align:center}
+.cnt-inp{width:100%;height:42px;text-align:center;font-size:17px;font-weight:700;border-radius:var(--radius);border:1.5px solid var(--border);background:#fff;color:var(--text);font-family:inherit}
+.cnt-inp:focus{outline:none;border-color:var(--teal)}
+.cnt-inp.done{background:var(--teal-c);border-color:#9FE1CB}
+.cnt-total{height:42px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;border-radius:var(--radius);background:var(--gray-c);color:var(--text2)}
+.cnt-progress{font-size:11px;color:var(--text3);text-align:center;margin-bottom:8px}
+
+/* REQUERIMIENTOS */
+.req-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--radius);padding:12px 13px;margin-bottom:8px}
+.req-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:10px}
+.req-btn{height:40px;border-radius:var(--radius);border:none;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:5px;color:#fff}
+.req-btn.ok{background:#639922}
+.req-btn.no{background:var(--gray-m)}
+.req-btn:disabled{opacity:.4}
+
 /* TOAST */
-.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:12px 20px;font-size:13px;font-weight:600;opacity:0;transition:opacity .25s;z-index:999;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.1)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:12px 20px;font-size:13px;font-weight:600;opacity:0;transition:opacity .25s;z-index:999;white-space:normal;max-width:calc(100% - 32px);text-align:center;box-shadow:0 4px 16px rgba(0,0,0,.1)}
 .toast.ok{border-color:#97C459;color:var(--green)}
 .toast.err{border-color:#F09595;color:var(--red-t)}
 .toast.warn{border-color:#EF9F27;color:var(--amber)}
@@ -155,16 +194,20 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
 <!-- LOGIN -->
 <div id="scr-login">
   <div class="login-card">
-    <div class="login-logo"><i class="ti ti-package"></i></div>
-    <div class="login-title">Bodega Barra</div>
-    <div class="login-sub">Holy Moly Tobalaba</div>
-    <div class="field-grp">
-      <div class="field-lbl">Usuario</div>
-      <select id="sel-usr">
-        <option value="">Cargando...</option>
-      </select>
+    <div class="hm-logo">
+      <div class="hm-name">Holy Moly</div>
+      <div class="hm-sub">&ldquo;Back to Basics&rdquo;</div>
     </div>
-    <div class="field-grp">
+    <div class="login-title">HMT OPS</div>
+    <div class="login-sub">Holy Moly Tobalaba · Operaciones</div>
+    <div class="field-grp" id="grp-nombre">
+      <div class="field-lbl">Tu nombre</div>
+      <select id="sel-usr">
+        <option value="">Cargando usuarios...</option>
+      </select>
+      <div id="login-retry"></div>
+    </div>
+    <div class="field-grp" id="grp-pin" style="display:none">
       <div class="field-lbl">PIN</div>
       <div class="pin-disp">
         <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
@@ -194,28 +237,17 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
 <div id="scr-main" style="display:none">
   <div class="header">
     <div class="header-top">
-      <span class="app-title"><i class="ti ti-package"></i> Bodega Barra</span>
+      <span class="app-title"><i class="ti ti-building-store"></i> HMT OPS</span>
       <span class="user-badge" onclick="logout()">
         <i class="ti ti-user"></i><span id="lbl-usr">—</span><i class="ti ti-logout" style="font-size:12px;color:var(--text3)"></i>
       </span>
     </div>
     <div class="date-lbl" id="lbl-fecha"></div>
   </div>
-  <div class="nav-tabs">
-    <button class="nav-tab active" onclick="goTab('registro')"><i class="ti ti-edit"></i> Registro</button>
-    <button class="nav-tab" onclick="goTab('historial')"><i class="ti ti-list"></i> Historial</button>
-    <button class="nav-tab" onclick="goTab('stock')"><i class="ti ti-chart-bar"></i> Stock</button>
-    <button class="nav-tab" onclick="goTab('pedidos')"><i class="ti ti-shopping-cart"></i> Pedidos</button>
-  </div>
+  <div class="nav-tabs" id="nav-tabs"></div>
 
-  <!-- REGISTRO -->
-  <div id="tab-registro" class="tab-body">
-    <div id="bar-note" class="banner banner-warn" style="display:none">
-      <i class="ti ti-lock"></i> Modo bartender — solo salidas
-    </div>
-    <div class="banner banner-ok">
-      <i class="ti ti-cloud"></i> Conectado a Google Sheets en tiempo real
-    </div>
+  <!-- REGISTRO (encargado: barra completa) -->
+  <div id="tab-registro" class="tab-body" style="display:none">
     <div class="search-wrap">
       <i class="ti ti-search s-ico"></i>
       <input type="text" id="srch" placeholder="Buscar producto..." oninput="renderProds()">
@@ -235,18 +267,121 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
       <div class="sec-lbl">Cantidad</div>
       <div class="qty-row">
         <button class="qty-btn" onclick="adjQ(-1)">−</button>
-        <input type="number" id="qty" class="qty-inp" value="1" min="1">
+        <input type="number" inputmode="numeric" id="qty" class="qty-inp" value="1" min="1">
         <span class="qty-unit" id="qty-u">und.</span>
       </div>
-      <div class="sec-lbl">Observación (opcional)</div>
-      <textarea class="note-inp" id="nota" placeholder="Ej: inicio turno, quiebre, merma..."></textarea>
-      <button class="btn-conf salida" id="btn-conf" onclick="confirmar()">
+      <div class="sec-lbl">Observación <span class="req-star">* obligatoria</span></div>
+      <textarea class="note-inp" id="nota" placeholder="Motivo del movimiento (mínimo 5 letras)..." oninput="valNota('nota','nota-hint','btn-conf')"></textarea>
+      <div class="note-hint" id="nota-hint">Sin observación no se puede registrar.</div>
+      <button class="btn-conf salida" id="btn-conf" onclick="confirmar()" disabled>
         <i class="ti ti-check"></i> Confirmar salida
       </button>
       <div id="sending" class="sending" style="display:none">
         <i class="ti ti-loader"></i> Enviando a Google Sheets...
       </div>
     </div>
+  </div>
+
+  <!-- REQUERIMIENTOS -->
+  <div id="tab-reque" class="tab-body" style="display:none">
+    <!-- Vista bartender: crear requerimiento -->
+    <div id="req-crear" style="display:none">
+      <div class="banner banner-info">
+        <i class="ti ti-send"></i> Pide lo que necesitas — un encargado lo aprueba y registra la salida
+      </div>
+      <div class="search-wrap">
+        <i class="ti ti-search s-ico"></i>
+        <input type="text" id="srch-req" placeholder="Buscar producto..." oninput="renderProdsReq()">
+      </div>
+      <div class="prod-list" id="prod-list-req"></div>
+      <div id="req-panel" class="reg-panel" style="display:none">
+        <div class="reg-tit" id="req-tit"></div>
+        <div class="sec-lbl">Cantidad</div>
+        <div class="qty-row">
+          <button class="qty-btn" onclick="adjQR(-1)">−</button>
+          <input type="number" inputmode="numeric" id="qty-req" class="qty-inp" value="1" min="1">
+          <span class="qty-unit" id="qty-u-req">und.</span>
+        </div>
+        <div class="sec-lbl">Motivo <span class="req-star">* obligatorio</span></div>
+        <textarea class="note-inp" id="nota-req" placeholder="Para qué lo necesitas (mínimo 5 letras)..." oninput="valNota('nota-req','hint-req','btn-req')"></textarea>
+        <div class="note-hint" id="hint-req">Sin motivo no se puede enviar.</div>
+        <button class="btn-conf teal" id="btn-req" onclick="enviarReq()" disabled>
+          <i class="ti ti-send"></i> Enviar requerimiento
+        </button>
+        <div id="sending-req" class="sending" style="display:none">
+          <i class="ti ti-loader"></i> Enviando...
+        </div>
+      </div>
+      <div class="sec-lbl" style="margin-top:16px">Mis requerimientos de hoy</div>
+      <div id="req-mios"><div class="empty">Sin requerimientos aún</div></div>
+    </div>
+    <!-- Vista encargado: bandeja de pendientes -->
+    <div id="req-bandeja" style="display:none">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px">
+        <span style="font-size:13px;font-weight:700">Requerimientos de barra</span>
+        <button class="chip" onclick="cargarReqs(true)" style="border-color:var(--teal);color:var(--teal)"><i class="ti ti-refresh"></i> Actualizar</button>
+      </div>
+      <div id="req-list"><div class="empty">Cargando...</div></div>
+    </div>
+  </div>
+
+  <!-- CONTEO SALÓN (garzón + encargado) -->
+  <div id="tab-conteo" class="tab-body" style="display:none">
+    <div class="banner banner-ok">
+      <i class="ti ti-clipboard-check"></i> <span id="cnt-titulo">Conteo de apertura</span>
+    </div>
+    <div class="banner banner-warn" id="cnt-hoy-warn" style="display:none">
+      <i class="ti ti-alert-triangle"></i> Hoy ya se guardó un conteo — si guardas otro, reemplaza al anterior
+    </div>
+    <div class="cnt-progress" id="cnt-progress"></div>
+    <div class="sec-lbl" style="margin-top:4px">🥤 Bebidas — Nevera y Bodega</div>
+    <div id="cnt-bebidas"><div class="empty">Cargando productos...</div></div>
+    <div class="sec-lbl" style="margin-top:14px" id="cnt-cubiertos-lbl">🍴 Cubiertos y ceniceros — total del local</div>
+    <div id="cnt-cubiertos"></div>
+    <div class="reg-panel" id="cnt-footer" style="display:none">
+      <div class="sec-lbl">Observación <span class="req-star">* obligatoria</span></div>
+      <textarea class="note-inp" id="nota-cnt" placeholder="Ej: conteo normal de apertura / faltó contar X porque... (mínimo 5 letras)" oninput="valNota('nota-cnt','hint-cnt','btn-cnt')"></textarea>
+      <div class="note-hint" id="hint-cnt">Sin observación no se puede guardar.</div>
+      <button class="btn-conf teal" id="btn-cnt" onclick="guardarConteo()" disabled>
+        <i class="ti ti-device-floppy"></i> Guardar conteo del día
+      </button>
+      <div id="sending-cnt" class="sending" style="display:none">
+        <i class="ti ti-loader"></i> Guardando en Google Sheets...
+      </div>
+    </div>
+    <!-- Entrada semanal salón: solo encargado -->
+    <div id="cnt-entrada-wrap" style="display:none">
+      <div class="sec-lbl" style="margin-top:18px">📦 Entrada de pedido (solo encargados)</div>
+      <div class="reg-panel" style="margin-top:6px">
+        <div class="sec-lbl">Producto</div>
+        <select id="ent-prod" style="margin-bottom:13px"></select>
+        <div class="sec-lbl">Cantidad recibida</div>
+        <div class="qty-row">
+          <button class="qty-btn" onclick="adjQE(-1)">−</button>
+          <input type="number" inputmode="numeric" id="qty-ent" class="qty-inp" value="1" min="1">
+          <span class="qty-unit">und.</span>
+        </div>
+        <div class="sec-lbl">Observación <span class="req-star">* obligatoria</span></div>
+        <textarea class="note-inp" id="nota-ent" placeholder="Ej: pedido semanal proveedor X, guía N°... (mínimo 5 letras)" oninput="valNota('nota-ent','hint-ent','btn-ent')"></textarea>
+        <div class="note-hint" id="hint-ent">Sin observación no se puede registrar.</div>
+        <button class="btn-conf entrada" id="btn-ent" onclick="guardarEntradaSalon()" disabled>
+          <i class="ti ti-arrow-down"></i> Registrar entrada
+        </button>
+        <div id="sending-ent" class="sending" style="display:none">
+          <i class="ti ti-loader"></i> Guardando...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONSUMO (encargado) -->
+  <div id="tab-consumo" class="tab-body" style="display:none">
+    <div class="banner banner-ok">
+      <i class="ti ti-trending-down"></i> Consumo del día = conteo + entradas − conteo siguiente
+    </div>
+    <div class="cat-scroll" id="consumo-dias"></div>
+    <div style="height:6px"></div>
+    <div id="consumo-body"><div class="empty">Cargando consumo...</div></div>
   </div>
 
   <!-- HISTORIAL -->
@@ -283,56 +418,152 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
 <div class="toast" id="toast"></div>
 
 <script>
-// Reemplaza esta URL por la del deployment de Apps Script (Sheet nuevo).
-// El mismo deployment atiende tanto GET (?accion=...) como POST (registro de movimientos).
-const SCRIPT_URL="https://script.google.com/macros/s/AKfycbzieiX46vBNj7se4ubGNzkhpgPdY66-A6lagwV3ItRpptV3KEwGoTOXrt3IbTtS3rku/exec";
+// ============================================================
+// HMT OPS v2 — STAGING
+// Reemplazar por la URL de la implementación de STAGING primero;
+// producción solo después de probar todo.
+// ============================================================
+const SCRIPT_URL="https://script.google.com/macros/s/AKfycbzieiX46vBNj7se4ubGNzkhpgPdY66-A6lagwV3ItRpptV3KEwGoTOXrt3IbTtS3rku/exec"; // PRODUCCIÓN
+// MODO DEMO: mientras SCRIPT_URL sea el placeholder, la app carga datos de
+// muestra y simula los POST (con folios DEMO-*) para poder probar la UX
+// completa sin backend. Se desactiva solo al pegar una URL real.
+// El modo demo SOLO existe en desarrollo local. Antes bastaba con que la URL
+// quedara vacía o rota para que la app arrancara en demo y aceptara los PIN de
+// juguete mostrando la vista de encargado — una puerta que se abría sola ante
+// un error de despliegue. Ahora, fuera de localhost, jamás entra en demo.
+const ES_LOCAL = ['localhost', '127.0.0.1', ''].indexOf(location.hostname) > -1;
+const DEMO = ES_LOCAL && SCRIPT_URL.indexOf('http') !== 0;
+
 const CATS=["Todos","Cerveza","Vino","Ron","Pisco","Whisky","Whiskey","Tequila","Mezcal","Gin","Vodka","Licor","Bitter","Cognac","Sin Alcohol","Bebida","Frutas","Insumos"];
 const TIPOS_ENC=[{id:"salida",label:"Salida",icon:"ti-arrow-up"},{id:"entrada",label:"Entrada",icon:"ti-arrow-down"},{id:"merma",label:"Merma",icon:"ti-alert-triangle"},{id:"traspaso",label:"Traspaso",icon:"ti-arrows-exchange"},{id:"correccion",label:"Corrección",icon:"ti-edit"}];
-const TIPOS_BAR=[{id:"salida",label:"Salida",icon:"ti-arrow-up"}];
+// El bartender conserva la salida directa (decisión 01/08) pero SOLO salida:
+// corrección y traspaso quedan fuera de su alcance — las correcciones no
+// descuentan stock, así que serían un canal de salida invisible al inventario.
+// El servidor repite esta restricción; esto es solo la mitad visible.
+const TIPOS_POR_ROL={encargado:TIPOS_ENC,bartender:TIPOS_ENC.filter(t=>t.id==='salida')};
+function tiposDeRol(){return TIPOS_POR_ROL[usr&&usr.rol]||TIPOS_POR_ROL.bartender;}
+const OBS_MIN=5;
 
-let stk=[]; // se llena en vivo desde el Sheet (accion=stock)
-let USUARIOS_APP=[]; // se llena en vivo desde el Sheet (accion=usuarios)
-let SEMANA_ACTUAL='S27'; // se actualiza al cargar (accion=stock trae la semana calculada por el Sheet)
+// Definición de pestañas por rol
+const TABS_POR_ROL={
+  encargado:[
+    {id:'registro',label:'Registro',icon:'ti-edit'},
+    {id:'reque',label:'Requerim.',icon:'ti-inbox',badge:true},
+    {id:'conteo',label:'Conteo',icon:'ti-clipboard-check'},
+    {id:'consumo',label:'Consumo',icon:'ti-trending-down'},
+    {id:'stock',label:'Stock',icon:'ti-chart-bar'},
+    {id:'pedidos',label:'Pedidos',icon:'ti-shopping-cart'},
+    {id:'historial',label:'Historial',icon:'ti-list'}
+  ],
+  bartender:[
+    {id:'registro',label:'Registro',icon:'ti-edit'},
+    {id:'reque',label:'Requerir',icon:'ti-send'}
+  ],
+  garzon:[
+    {id:'conteo',label:'Conteo',icon:'ti-clipboard-check'}
+  ]
+};
 
+let stk=[];              // stock barra (accion=stock)
+let USUARIOS_APP=[];     // usuarios (accion=usuarios)
+let SEMANA_ACTUAL='S27';
+let SALON={maestro:[],ultimo:{}};   // módulo salón (accion=salon)
+let REQS=[];             // requerimientos
+let PED=[];              // pedidos barra
+let reqPend=0;
+
+// ---------- DATOS DEMO ----------
+const DEMO_BEBIDAS=['Coca Original','Coca Light','Coca Zero','Sprite','Sprite Zero','Ginger','Ginger Zero','Fanta','Tónica','Pepsi','Pepsi Zero'];
+const DEMO_CUBIERTOS=['Tenedor','Cuchillo','Cuchara','Cucharilla Postre','Cenicero'];
+let demoFolio=100;
+function demoData(){
+  USUARIOS_APP=[
+    {nombre:'Demo Encargado',rol:'encargado',pin:'1111'},
+    {nombre:'Demo Bartender',rol:'bartender',pin:'2222'},
+    {nombre:'Demo Garzón',rol:'garzon',pin:'3333'}
+  ];
+  stk=[
+    {cat:'Cerveza',nombre:'Heineken',unidad:'barril',s:3},
+    {cat:'Pisco',nombre:'Pisco Alto del Carmen 35°',unidad:'botella',s:6},
+    {cat:'Ron',nombre:'Ron Abuelo Añejo',unidad:'botella',s:4},
+    {cat:'Gin',nombre:'Gin Beefeater',unidad:'botella',s:0},
+    {cat:'Sin Alcohol',nombre:'Agua Tónica',unidad:'unidad',s:24},
+    {cat:'Insumos',nombre:'Limón',unidad:'kg',s:8}
+  ];
+  SEMANA_ACTUAL='S29';
+  SALON.maestro=DEMO_BEBIDAS.map(p=>({local:'TOBALABA',categoria:'Bebida',producto:p,unidad:'unidad',activo:'Sí'}))
+    .concat(DEMO_CUBIERTOS.map(p=>({local:'TOBALABA',categoria:'Cubierto',producto:p,unidad:'unidad',activo:'Sí'})));
+  SALON.ultimo={'Coca Original':{nevera:46,bodega:336,total:382,fecha:'08/07'},'Coca Light':{nevera:28,bodega:48,total:76,fecha:'08/07'},'Tenedor':{total:180,fecha:'08/07'}};
+  REQS=[
+    {folio:'R-0012',fecha:'09/07',hora:'18:40',producto:'Ron Abuelo Añejo',cantidad:1,unidad:'botella',solicitante:'Demo Bartender',estado:'PENDIENTE',motivo:'Quiebre en barra, viernes alta demanda'},
+    {folio:'R-0011',fecha:'09/07',hora:'17:05',producto:'Gin Beefeater',cantidad:2,unidad:'botella',solicitante:'Demo Bartender',estado:'APROBADO',resueltoPor:'Demo Encargado',folioMovimiento:'S-0087',motivo:'Reposición estación 2'}
+  ];
+  PED=[{categoria:'Gin',nombre:'Gin Beefeater',unidad:'botella',stockActual:0,minimo:2,maximo:6,pedidoSugerido:6}];
+}
+function demoPost(payload){
+  if(payload.op==='informe')return {status:'ok',semana:SEMANA_ACTUAL,fechas:'',movimientos:[],bases:{}};
+  if(payload.op==='panel'||payload.op==='leer')return {status:'ok'};
+  demoFolio++;
+  const pref={crearReq:'R',conteoSalon:'CD',entradaSalon:'E'}[payload.op]||({salida:'S',entrada:'E',merma:'M',traspaso:'T',correccion:'C'}[payload.tipo]||'X');
+  const folio=pref+'-0'+demoFolio;
+  if(payload.op==='resolverReq'){
+    const req=REQS.find(r=>r.folio===payload.folioReq);
+    if(req){req.estado=payload.decision;req.resueltoPor=payload.responsable;req.folioMovimiento=payload.decision==='APROBADO'?'S-0'+demoFolio:'';}
+    return {status:'ok',folioMovimiento:req?req.folioMovimiento:'',producto:req?req.producto:'',cantidad:req?req.cantidad:0};
+  }
+  if(payload.op==='crearReq'){
+    REQS.unshift({folio,fecha:new Date().toLocaleDateString('es-CL').slice(0,5),hora:new Date().toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'}),producto:payload.producto,cantidad:payload.cantidad,unidad:payload.unidad,solicitante:payload.solicitante,estado:'PENDIENTE',motivo:payload.motivo});
+  }
+  return {status:'ok',folio};
+}
+
+// ---------- CARGA INICIAL ----------
 async function cargarDatosIniciales(){
-  const selUsr=document.getElementById('sel-usr');
+  document.getElementById('login-retry').innerHTML='';
+  if(DEMO){
+    demoData();
+    renderNombresLogin();
+    document.querySelector('.login-sub').textContent='⚠️ MODO DEMO — PINs: 1111 / 2222 / 3333';
+    return;
+  }
   try{
-    const [rStock,rUsr]=await Promise.all([
-      fetch(SCRIPT_URL+"?accion=stock"),
-      fetch(SCRIPT_URL+"?accion=usuarios")
-    ]);
-    const dStock=await rStock.json();
+    // Solo la lista de nombres+roles es pública (para el login); además
+    // este GET "despierta" el servidor mientras el usuario elige su nombre.
+    const rUsr=await fetch(SCRIPT_URL+"?accion=usuarios");
     const dUsr=await rUsr.json();
-    if(dStock.status==='ok'){
-      stk=dStock.productos.map(p=>({cat:p.categoria,nombre:p.nombre,unidad:p.unidad,s:Number(p.stock)||0}));
-      SEMANA_ACTUAL=dStock.semana||'S27';
-    } else {
-      throw new Error(dStock.msg||'Error al leer stock');
-    }
     if(dUsr.status==='ok'){
-      USUARIOS_APP=dUsr.usuarios;
-      const encargados=USUARIOS_APP.filter(u=>u.rol==='encargado');
-      const bartenders=USUARIOS_APP.filter(u=>u.rol==='bartender');
-      let html='<option value="">Selecciona tu nombre...</option>';
-      if(encargados.length){
-        html+='<optgroup label="Encargados">'+encargados.map(u=>`<option value="${u.nombre}|${u.rol}|${u.pin}">${u.nombre}</option>`).join('')+'</optgroup>';
-      }
-      if(bartenders.length){
-        html+='<optgroup label="Bartenders">'+bartenders.map(u=>`<option value="${u.nombre}|${u.rol}|${u.pin}">${u.nombre}</option>`).join('')+'</optgroup>';
-      }
-      selUsr.innerHTML=html;
-    } else {
-      throw new Error(dUsr.msg||'Error al leer usuarios');
-    }
+      USUARIOS_APP=dUsr.usuarios; // solo {nombre, rol} — los PINs nunca llegan al navegador
+      renderNombresLogin();
+    } else { throw new Error(dUsr.msg||'Error al leer usuarios'); }
   }catch(err){
-    selUsr.innerHTML='<option value="">Error al cargar — recarga la página</option>';
-    toast('No se pudo conectar al Sheet. Verifica tu conexión y recarga.','err');
+    document.getElementById('sel-usr').innerHTML='<option value="">Sin conexión...</option>';
+    document.getElementById('login-retry').innerHTML='<button class="retry-btn" onclick="cargarDatosIniciales()">↻ Reintentar conexión</button>';
+    toast('No se pudo conectar. Verifica tu señal y toca Reintentar.','err');
   }
 }
 cargarDatosIniciales();
 
-let movs=[],pin='',usr=null,cat='Todos',sel=null,tipo='salida',turno='AM';
+let movs=[],pin='',usr=null,cat='Todos',sel=null,selReq=null,tipo='salida',turno='AM';
 
+// Escape de HTML para todo texto que escriben usuarios (anti-XSS)
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+// ---------- LOGIN (por usuario: nombre → PIN, validado en el servidor) ----------
+// El rol NO se elige: es un atributo del usuario en el Sheet USUARIOS. El
+// servidor lo devuelve al validar el PIN y decide qué pestañas muestra la app.
+function renderNombresLogin(){
+  const sel=document.getElementById('sel-usr');
+  const activos=USUARIOS_APP.slice().sort((a,b)=>String(a.nombre).localeCompare(String(b.nombre),'es'));
+  sel.innerHTML='<option value="">Selecciona tu nombre...</option>'+
+    activos.map(u=>`<option value="${esc(u.nombre)}">${esc(u.nombre)}</option>`).join('');
+  sel.onchange=()=>{
+    rPin();
+    document.getElementById('lerr').textContent='';
+    document.getElementById('grp-pin').style.display=sel.value?'block':'none';
+  };
+  document.getElementById('grp-nombre').style.display='block';
+  document.getElementById('grp-pin').style.display='none';
+}
 function pk(k){
   const e=document.getElementById('lerr');e.textContent='';
   if(k==='bk'){pin=pin.slice(0,-1);updPin();return;}
@@ -344,31 +575,162 @@ function pk(k){
 function updPin(){for(let i=0;i<4;i++)document.getElementById('pd'+i).classList.toggle('on',i<pin.length);}
 function rPin(){pin='';updPin();}
 
-function doLogin(){
-  const v=document.getElementById('sel-usr').value;
+let loginEnCurso=false;
+async function doLogin(){
+  if(loginEnCurso)return;
+  const nombre=document.getElementById('sel-usr').value;
   const e=document.getElementById('lerr');
-  if(!v){e.textContent='Selecciona tu nombre.';rPin();return;}
-  const p=v.split('|');
-  if(pin!==p[2]){e.textContent='PIN incorrecto.';rPin();return;}
-  usr={nombre:p[0],rol:p[1]};
-  tipo='salida';turno='AM';cat='Todos';sel=null;pin='';rPin();
+  if(!nombre){e.textContent='Selecciona tu nombre.';rPin();return;}
+  if(pin.length!==4){e.textContent='Ingresa tu PIN de 4 dígitos.';return;}
+  loginEnCurso=true;e.textContent='Verificando...';
+  const lento=setTimeout(()=>{e.textContent='Despertando servidor, unos segundos...';},2500);
+  let r;
+  if(DEMO){
+    const u=USUARIOS_APP.find(x=>x.nombre===nombre&&x.pin===pin);
+    r=u?{status:'ok',nombre:u.nombre,rol:u.rol}:{status:'error',msg:'Nombre o PIN incorrecto'};
+  }else{
+    try{
+      const resp=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify({op:'login',nombre,pin})});
+      r=await resp.json();
+    }catch(err){r={status:'error',msg:'Sin conexión — reintenta'};}
+  }
+  clearTimeout(lento);
+  if(r.status!=='ok'){loginEnCurso=false;e.textContent=r.msg||'Nombre o PIN incorrecto.';rPin();return;}
+  usr={nombre:r.nombre,rol:r.rol,pin:pin}; // el pin firma cada operación; nunca se persiste
+  tipo='salida';turno='AM';cat='Todos';sel=null;selReq=null;pin='';rPin();
+  // Una sola llamada trae TODO lo del rol: las pestañas abren instantáneas
+  e.textContent='Cargando tus datos...';
+  if(!DEMO){
+    try{
+      const p=await postOp({op:'panel'});
+      if(p.status==='ok')aplicarPanel(p);
+    }catch(err){/* las pestañas reintentarán individualmente */}
+  }else{salonCargado=true;pedCargado=true;}
+  loginEnCurso=false;e.textContent='';
   document.getElementById('scr-login').style.display='none';
   document.getElementById('scr-main').style.display='block';
   document.getElementById('lbl-usr').textContent=usr.nombre;
   document.getElementById('lbl-fecha').textContent=new Date().toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  document.getElementById('bar-note').style.display=usr.rol==='bartender'?'flex':'none';
-  document.getElementById('reg-panel').style.display='none';
-  goTab('registro');initCats();renderProds();renderStk();renderHist();
+  buildNav();
+  actualizarBadge();
+  const tabs=TABS_POR_ROL[usr.rol]||TABS_POR_ROL.garzon;
+  goTab(tabs[0].id);
+  if(usr.rol==='encargado'){initCats();renderProds();renderStk();renderHist();renderReqs();iniciarPollingBadge();}
+  else if(usr.rol==='bartender'){initCats();renderProds();}   // recupera el registro de salidas
+}
+
+// Vuelca la respuesta de op:'panel' al estado local
+function aplicarPanel(p){
+  if(p.stock&&p.stock.status==='ok'){
+    stk=p.stock.productos.map(x=>({cat:x.categoria,nombre:x.nombre,unidad:x.unidad,s:Number(x.stock)||0}));
+    SEMANA_ACTUAL=p.stock.semana||SEMANA_ACTUAL;
+  }
+  if(p.salon&&p.salon.status==='ok'){
+    SALON.maestro=(p.salon.maestro||[]).filter(m=>String(m.activo).toLowerCase()!=='no');
+    SALON.ultimo=p.salon.ultimo||{};
+    salonCargado=true;
+  }
+  if(p.requerimientos&&p.requerimientos.status==='ok'){
+    REQS=p.requerimientos.requerimientos||[];
+    reqPend=REQS.filter(x=>x.estado==='PENDIENTE').length;
+  }
+  if(p.consumo&&p.consumo.status==='ok'){
+    PERIODOS=p.consumo.periodos||[];
+    periodoSel=PERIODOS.length-1;
+    consumoCargado=true;
+  }
+  if(p.pedidos&&p.pedidos.status==='ok'){PED=p.pedidos.pedidos||[];pedCargado=true;}
+}
+
+// El badge de requerimientos se refresca solo cada 75 s mientras haya
+// sesión de encargado — un requerimiento urgente ya no duerme.
+let pollBadge=null;
+function iniciarPollingBadge(){
+  clearInterval(pollBadge);
+  pollBadge=setInterval(()=>{
+    if(usr&&usr.rol==='encargado')cargarReqs(false);
+    else clearInterval(pollBadge);
+  },75000);
 }
 
 function logout(){
+  if(usr&&!confirm('¿Cerrar la sesión de '+usr.nombre+'?'))return;
+  // Limpieza completa: en un celular compartido el siguiente usuario no debe
+  // ver los datos del anterior.
   usr=null;pin='';rPin();
+  movs=[];reqMios=[];REQS=[];PED=[];PERIODOS=[];periodoSel=-1;reqPend=0;
+  salonCargado=false;pedCargado=false;consumoCargado=false;sel=null;selReq=null;
+  clearInterval(pollBadge);
   document.getElementById('sel-usr').value='';
   document.getElementById('lerr').textContent='';
+  document.getElementById('grp-pin').style.display='none';
+  renderNombresLogin();
   document.getElementById('scr-login').style.display='block';
   document.getElementById('scr-main').style.display='none';
 }
 
+// ---------- NAV POR ROL ----------
+function buildNav(){
+  const tabs=TABS_POR_ROL[usr.rol]||TABS_POR_ROL.garzon;
+  document.getElementById('nav-tabs').innerHTML=tabs.map(t=>
+    `<button class="nav-tab" id="navtab-${t.id}" onclick="goTab('${t.id}')">
+      <i class="ti ${t.icon}"></i> ${t.label}${t.badge?'<span class="nav-badge" id="req-badge" style="display:none">0</span>':''}
+    </button>`
+  ).join('');
+}
+
+let salonCargado=false, pedCargado=false, consumoCargado=false;
+function goTab(t){
+  ['registro','reque','conteo','consumo','historial','stock','pedidos'].forEach(id=>{
+    const el=document.getElementById('tab-'+id);
+    if(el)el.style.display=id===t?'block':'none';
+    const nb=document.getElementById('navtab-'+id);
+    if(nb)nb.classList.toggle('active',id===t);
+  });
+  if(t==='conteo'){
+    // No re-renderizar si ya hay inputs: un conteo a medio llenar sobrevive
+    // al paseo por otras pestañas.
+    if(!salonCargado)cargarSalon();
+    else if(!document.getElementById('cnt-bebidas').querySelector('.cnt-inp'))renderConteo();
+  }
+  if(t==='stock'&&!salonCargado)cargarSalon().then(()=>renderStk()); // visión total: barra + salón
+  if(t==='consumo'){consumoCargado?renderConsumo():cargarConsumo();}
+  if(t==='pedidos'){pedCargado?renderPedidos():cargarPedidos();}
+  if(t==='reque'){
+    document.getElementById('req-crear').style.display=usr.rol==='bartender'?'block':'none';
+    document.getElementById('req-bandeja').style.display=usr.rol==='encargado'?'block':'none';
+    if(usr.rol==='bartender'){renderProdsReq();renderReqMios();}
+    if(usr.rol==='encargado')cargarReqs(false);
+  }
+}
+
+// ---------- VALIDACIÓN OBSERVACIÓN (candado frontend) ----------
+function obsValida(txt){return txt.trim().length>=OBS_MIN;}
+function valNota(inpId,hintId,btnId){
+  const inp=document.getElementById(inpId);
+  const hint=document.getElementById(hintId);
+  const btn=document.getElementById(btnId);
+  const ok=obsValida(inp.value);
+  inp.classList.toggle('invalid',!ok&&inp.value.length>0);
+  hint.classList.toggle('bad',!ok&&inp.value.length>0);
+  hint.textContent=ok?'✓ Observación válida':`Faltan ${Math.max(0,OBS_MIN-inp.value.trim().length)} letras — sin observación no se puede registrar.`;
+  if(btnId==='btn-cnt'){actualizarBtnConteo();return;}
+  btn.disabled=!ok;
+}
+
+// ---------- POST helper ----------
+// Toda escritura viaja firmada con las credenciales de la sesión;
+// el servidor las valida y decide el rol (la app no es la autoridad).
+async function postOp(payload){
+  if(DEMO)return demoPost(payload);
+  if(usr)payload.auth={nombre:usr.nombre,pin:usr.pin};
+  const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(payload)});
+  return await r.json();
+}
+
+// ============================================================
+// MÓDULO REGISTRO BARRA (solo encargado)
+// ============================================================
 function initCats(){
   document.getElementById('cat-scroll').innerHTML=CATS.map(c=>
     `<div class="chip${c===cat?' active':''}" onclick="setCat('${c}')">${c}</div>`
@@ -376,7 +738,7 @@ function initCats(){
 }
 function setCat(c){
   cat=c;sel=null;
-  document.querySelectorAll('.chip').forEach(el=>el.classList.toggle('active',el.textContent===c));
+  document.querySelectorAll('#cat-scroll .chip').forEach(el=>el.classList.toggle('active',el.textContent===c));
   document.getElementById('reg-panel').style.display='none';
   renderProds();
 }
@@ -404,16 +766,17 @@ function selProd(idx){
   document.getElementById('qty-u').textContent=p.unidad;
   document.getElementById('qty').value=1;
   document.getElementById('nota').value='';
+  valNota('nota','nota-hint','btn-conf');
   buildTipos();setTipo('salida');setTurno('AM');
   document.getElementById('reg-panel').style.display='block';
   setTimeout(()=>document.getElementById('reg-panel').scrollIntoView({behavior:'smooth',block:'nearest'}),80);
 }
 
 function buildTipos(){
-  const tipos=usr.rol==='bartender'?TIPOS_BAR:TIPOS_ENC;
-  const cols=tipos.length===1?'1fr':tipos.length<=2?'1fr 1fr':'1fr 1fr 1fr';
+  const tipos=tiposDeRol();
+  if(!tipos.some(t=>t.id===tipo))tipo=tipos[0].id;   // el rol puede no tener el tipo activo
   const g=document.getElementById('tipo-grid');
-  g.style.gridTemplateColumns=cols;
+  g.style.gridTemplateColumns=tipos.length>1?'1fr 1fr 1fr':'1fr';
   g.innerHTML=tipos.map(t=>
     `<button class="tipo-btn${tipo===t.id?' t-'+t.id:''}" onclick="setTipo('${t.id}')">
       <i class="ti ${t.icon}"></i> ${t.label}
@@ -422,16 +785,18 @@ function buildTipos(){
 }
 
 function setTipo(t){
+  const tipos=tiposDeRol();
+  if(!tipos.some(x=>x.id===t))return;   // no aceptar un tipo fuera del rol
   tipo=t;
-  const tipos=usr.rol==='bartender'?TIPOS_BAR:TIPOS_ENC;
-  document.querySelectorAll('.tipo-btn').forEach((btn,i)=>{
+  document.querySelectorAll('#tipo-grid .tipo-btn').forEach((btn,i)=>{
     const tid=tipos[i]?.id||'';
     btn.className='tipo-btn'+(t===tid?' t-'+tid:'');
   });
   const btn=document.getElementById('btn-conf');
-  const lbl=TIPOS_ENC.find(x=>x.id===t)?.label||t;
+  const lbl=tipos.find(x=>x.id===t)?.label||t;
   btn.className='btn-conf '+t;
   btn.innerHTML=`<i class="ti ti-check"></i> Confirmar ${lbl.toLowerCase()}`;
+  valNota('nota','nota-hint','btn-conf');
 }
 
 function setTurno(t){
@@ -439,10 +804,9 @@ function setTurno(t){
   document.getElementById('btn-am').classList.toggle('active',t==='AM');
   document.getElementById('btn-pm').classList.toggle('active',t==='PM');
 }
-function adjQ(d){
-  const i=document.getElementById('qty');
-  i.value=Math.max(1,(parseInt(i.value)||0)+d);
-}
+function adjQ(d){const i=document.getElementById('qty');i.value=Math.max(1,(parseInt(i.value)||0)+d);}
+function adjQR(d){const i=document.getElementById('qty-req');i.value=Math.max(1,(parseInt(i.value)||0)+d);}
+function adjQE(d){const i=document.getElementById('qty-ent');i.value=Math.max(1,(parseInt(i.value)||0)+d);}
 
 async function confirmar(){
   if(sel===null)return;
@@ -450,29 +814,423 @@ async function confirmar(){
   const qty=parseInt(document.getElementById('qty').value)||0;
   const nota=document.getElementById('nota').value.trim();
   if(qty<=0){toast('Cantidad inválida','err');return;}
+  if(!obsValida(nota)){toast('La observación es obligatoria','err');return;}
   if(['salida','merma','traspaso'].includes(tipo)&&qty>p.s){toast('Stock insuficiente','err');return;}
   document.getElementById('btn-conf').disabled=true;
   document.getElementById('sending').style.display='flex';
-  const payload={producto:p.nombre,tipo,cantidad:qty,unidad:p.unidad,turno,responsable:usr.nombre,observacion:nota};
-  let syncOk=false;
+  const payload={producto:p.nombre,tipo,cantidad:qty,unidad:p.unidad,turno,observacion:nota};
+  let syncOk=false,folio='',msgErr='';
   try{
-    const r=await fetch(SCRIPT_URL,{method:'POST',body:JSON.stringify(payload)});
-    const j=await r.json();
-    syncOk=j.status==='ok';
+    const j=await postOp(payload);
+    syncOk=j.status==='ok';folio=j.folio||'';msgErr=j.msg||'';
   }catch(e){syncOk=false;}
+  document.getElementById('sending').style.display='none';
+  if(!syncOk){
+    // No se cierra el panel ni se pierde nada: se muestra la causa real
+    // y el usuario puede reintentar con todo cargado.
+    document.getElementById('btn-conf').disabled=false;
+    toast(msgErr||'No se pudo registrar — revisa tu señal y reintenta','err');
+    return;
+  }
   if(['salida','merma','traspaso'].includes(tipo))p.s=Math.max(0,p.s-qty);
   else if(tipo==='entrada')p.s+=qty;
   const ts=new Date().toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
-  movs.unshift({ts,prod:p.nombre,tipo,qty,unidad:p.unidad,turno,user:usr.nombre,nota,sync:syncOk});
-  document.getElementById('btn-conf').disabled=false;
-  document.getElementById('sending').style.display='none';
+  movs.unshift({ts,prod:p.nombre,tipo,qty,unidad:p.unidad,turno,user:usr.nombre,nota,sync:true,folio});
   document.getElementById('reg-panel').style.display='none';
   sel=null;
-  toast(syncOk?`Registrado en Sheets — ${qty} ${p.unidad}`:'Guardado local · sin conexión','warn');
-  if(syncOk)toast(`Registrado en Sheets — ${qty} ${p.unidad}`,'ok');
+  toast(`${folio?folio+' · ':''}Registrado — ${qty} ${p.unidad}`,'ok');
   renderProds();renderHist();renderStk();
 }
 
+// ============================================================
+// MÓDULO REQUERIMIENTOS
+// ============================================================
+// --- Bartender: crear ---
+function renderProdsReq(){
+  const q=(document.getElementById('srch-req').value||'').toLowerCase();
+  const lista=stk.filter(p=>!q||p.nombre.toLowerCase().includes(q)||p.cat.toLowerCase().includes(q));
+  const el=document.getElementById('prod-list-req');
+  if(!lista.length){el.innerHTML='<div class="empty">Sin resultados</div>';return;}
+  el.innerHTML=lista.slice(0,40).map(p=>{
+    const idx=stk.indexOf(p);
+    return`<div class="prod-row${selReq===idx?' sel':''}" onclick="selProdReq(${idx})">
+      <div class="prod-name">${p.nombre}</div>
+      <div class="prod-cat">${p.cat}</div>
+      <div class="prod-stk ${p.s===0?'s-zero':'s-ok'}">${p.s} ${p.unidad}</div>
+    </div>`;
+  }).join('');
+}
+function selProdReq(idx){
+  selReq=idx;renderProdsReq();
+  const p=stk[idx];
+  document.getElementById('req-tit').textContent=p.nombre;
+  document.getElementById('qty-u-req').textContent=p.unidad;
+  document.getElementById('qty-req').value=1;
+  document.getElementById('nota-req').value='';
+  valNota('nota-req','hint-req','btn-req');
+  document.getElementById('req-panel').style.display='block';
+  setTimeout(()=>document.getElementById('req-panel').scrollIntoView({behavior:'smooth',block:'nearest'}),80);
+}
+let reqMios=[];
+async function enviarReq(){
+  if(selReq===null)return;
+  const p=stk[selReq];
+  const qty=parseInt(document.getElementById('qty-req').value)||0;
+  const motivo=document.getElementById('nota-req').value.trim();
+  if(qty<=0){toast('Cantidad inválida','err');return;}
+  if(!obsValida(motivo)){toast('El motivo es obligatorio','err');return;}
+  document.getElementById('btn-req').disabled=true;
+  document.getElementById('sending-req').style.display='flex';
+  let ok=false,folio='',msgErr='';
+  try{
+    const j=await postOp({op:'crearReq',producto:p.nombre,cantidad:qty,unidad:p.unidad,motivo});
+    ok=j.status==='ok';folio=j.folio||'';msgErr=j.msg||'';
+  }catch(e){ok=false;}
+  document.getElementById('sending-req').style.display='none';
+  if(!ok){
+    document.getElementById('btn-req').disabled=false;
+    toast(msgErr||'No se pudo enviar — reintenta','err');
+    return;
+  }
+  const ts=new Date().toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
+  reqMios.unshift({ts,prod:p.nombre,qty,unidad:p.unidad,motivo,folio,estado:'PENDIENTE'});
+  document.getElementById('req-panel').style.display='none';
+  selReq=null;renderProdsReq();renderReqMios();
+  toast(`${folio} enviado — un encargado lo revisará`,'ok');
+}
+function renderReqMios(){
+  const el=document.getElementById('req-mios');
+  if(!reqMios.length){el.innerHTML='<div class="empty">Sin requerimientos aún</div>';return;}
+  el.innerHTML=reqMios.map(r=>`
+    <div class="hist-item">
+      <div class="hist-top">
+        <span class="hist-prod"><span class="folio-tag">${esc(r.folio)}</span>${esc(r.prod)}</span>
+        <span class="badge ${r.estado.toLowerCase()}">${r.estado} · ${r.qty} ${esc(r.unidad)}</span>
+      </div>
+      <div class="hist-meta">${r.ts} · ${esc(r.motivo)}</div>
+    </div>`).join('');
+}
+
+// --- Encargado: bandeja ---
+async function cargarReqs(mostrarToast){
+  if(DEMO){
+    reqPend=REQS.filter(x=>x.estado==='PENDIENTE').length;
+    actualizarBadge();renderReqs();
+    if(mostrarToast)toast('Bandeja actualizada (demo)','ok');
+    return;
+  }
+  try{
+    const d=await postOp({op:'leer',que:'requerimientos'});
+    if(d.status!=='ok')throw new Error(d.msg||'Error');
+    REQS=d.requerimientos||[];
+    reqPend=REQS.filter(x=>x.estado==='PENDIENTE').length;
+    actualizarBadge();
+    renderReqs();
+    if(mostrarToast)toast('Bandeja actualizada','ok');
+  }catch(e){
+    document.getElementById('req-list').innerHTML='<div class="empty">No se pudo cargar.<br><button class="retry-btn" onclick="cargarReqs(true)">↻ Reintentar</button></div>';
+  }
+}
+function actualizarBadge(){
+  const b=document.getElementById('req-badge');
+  if(!b)return;
+  b.style.display=reqPend>0?'flex':'none';
+  b.textContent=reqPend;
+}
+function renderReqs(){
+  const el=document.getElementById('req-list');
+  const pend=REQS.filter(r=>r.estado==='PENDIENTE');
+  const resueltos=REQS.filter(r=>r.estado!=='PENDIENTE').slice(0,10);
+  let html='';
+  if(!pend.length)html+='<div class="empty">Sin requerimientos pendientes 🎉</div>';
+  pend.forEach(r=>{
+    html+=`<div class="req-card">
+      <div class="hist-top">
+        <span class="hist-prod"><span class="folio-tag">${esc(r.folio)}</span>${esc(r.producto)}</span>
+        <span class="badge pendiente">PENDIENTE · ${r.cantidad} ${esc(r.unidad||'und')}</span>
+      </div>
+      <div class="hist-meta">${esc(r.fecha)} ${esc(r.hora)} · Solicita: <b>${esc(r.solicitante)}</b></div>
+      <div class="hist-meta">Motivo: ${esc(r.motivo)}</div>
+      <div class="req-actions">
+        <button class="req-btn ok" onclick="resolverReq('${esc(r.folio)}','APROBADO')"><i class="ti ti-check"></i> Aprobar y dar salida</button>
+        <button class="req-btn no" onclick="resolverReq('${esc(r.folio)}','RECHAZADO')"><i class="ti ti-x"></i> Rechazar</button>
+      </div>
+    </div>`;
+  });
+  if(resueltos.length){
+    html+='<div class="sec-lbl" style="margin-top:14px">Últimos resueltos</div>';
+    resueltos.forEach(r=>{
+      html+=`<div class="hist-item">
+        <div class="hist-top">
+          <span class="hist-prod"><span class="folio-tag">${esc(r.folio)}</span>${esc(r.producto)}</span>
+          <span class="badge ${r.estado.toLowerCase()}">${r.estado} · ${r.cantidad} ${esc(r.unidad||'und')}</span>
+        </div>
+        <div class="hist-meta">Solicitó ${esc(r.solicitante)} · Resolvió ${esc(r.resueltoPor||'—')}${r.folioMovimiento?' · Mov: '+esc(r.folioMovimiento):''}</div>
+      </div>`;
+    });
+  }
+  el.innerHTML=html;
+}
+async function resolverReq(folio,decision){
+  const verbo=decision==='APROBADO'?'aprobar y registrar la SALIDA':'rechazar';
+  // El prompt se re-abre precargado si la observación quedó corta — no se
+  // pierde lo escrito. Cancelar avisa que el requerimiento sigue pendiente.
+  let obs='';
+  while(true){
+    obs=prompt(`Observación para ${verbo} ${folio} (obligatoria, mín. ${OBS_MIN} letras):`,obs||'');
+    if(obs===null){toast('No se registró — el requerimiento sigue pendiente','warn');return;}
+    if(obsValida(obs))break;
+    toast('Observación muy corta — complétala','warn');
+  }
+  // Doble tap bloqueado: los botones de la tarjeta se apagan de inmediato
+  document.querySelectorAll('.req-btn').forEach(b=>{b.disabled=true;});
+  toast('Registrando...','warn');
+  try{
+    const j=await postOp({op:'resolverReq',folioReq:folio,decision,observacion:obs.trim()});
+    if(j.status==='ok'){
+      toast(decision==='APROBADO'?`${folio} aprobado · salida ${j.folioMovimiento||''} registrada`:`${folio} rechazado`,'ok');
+      cargarReqs(false);
+      // refrescar stock local si hubo salida
+      if(decision==='APROBADO'&&j.producto){
+        const p=stk.find(x=>x.nombre===j.producto);
+        if(p)p.s=Math.max(0,p.s-(Number(j.cantidad)||0));
+        renderStk();
+      }
+    }else{
+      toast(j.msg||'No se pudo resolver','err');
+      cargarReqs(false); // reactiva botones con el estado real
+    }
+  }catch(e){
+    toast('Error de conexión — el requerimiento sigue pendiente','err');
+    cargarReqs(false);
+  }
+}
+
+// ============================================================
+// MÓDULO CONTEO SALÓN (garzón + encargado)
+// ============================================================
+async function cargarSalon(){
+  if(DEMO){salonCargado=true;renderConteo();return;}
+  try{
+    const d=await postOp({op:'leer',que:'salon'});
+    if(d.status!=='ok')throw new Error(d.msg||'Error');
+    SALON.maestro=(d.maestro||[]).filter(m=>String(m.activo).toLowerCase()!=='no');
+    SALON.ultimo=d.ultimo||{};
+    salonCargado=true;
+    renderConteo();
+  }catch(e){
+    document.getElementById('cnt-bebidas').innerHTML='<div class="empty">No se pudo cargar.<br><button class="retry-btn" onclick="cargarSalon()">↻ Reintentar</button></div>';
+  }
+}
+
+function renderConteo(){
+  const bebidas=SALON.maestro.filter(m=>m.categoria==='Bebida');
+  const cubiertos=SALON.maestro.filter(m=>m.categoria==='Cubierto');
+  const prev=p=>{
+    const u=SALON.ultimo[p];
+    return u?`Último: ${u.total} (${u.fecha})`:'Sin conteo previo';
+  };
+  // Aviso si HOY ya se guardó un conteo (el nuevo lo reemplaza en el cálculo)
+  const hoyStr=new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit'});
+  const yaContadoHoy=Object.values(SALON.ultimo).some(u=>u.fecha===hoyStr);
+  document.getElementById('cnt-hoy-warn').style.display=yaContadoHoy?'flex':'none';
+  document.getElementById('cnt-bebidas').innerHTML=bebidas.map((m,i)=>`
+    <div class="cnt-card">
+      <div class="cnt-head">
+        <span class="cnt-name">${m.producto}</span>
+        <span class="cnt-prev">${prev(m.producto)}</span>
+      </div>
+      <div class="cnt-inputs">
+        <div><div class="cnt-lbl">Nevera</div><input type="number" inputmode="numeric" min="0" class="cnt-inp" id="cb-n-${i}" oninput="updTotal(${i})"></div>
+        <div><div class="cnt-lbl">Bodega</div><input type="number" inputmode="numeric" min="0" class="cnt-inp" id="cb-b-${i}" oninput="updTotal(${i})"></div>
+        <div><div class="cnt-lbl">Total</div><div class="cnt-total" id="cb-t-${i}">—</div></div>
+      </div>
+    </div>`).join('');
+  // El menaje salió del conteo diario (decisión 01/08): si no hay cubiertos
+  // activos en MAESTRO, se oculta el bloque completo en vez de dejar el título solo.
+  document.getElementById('cnt-cubiertos-lbl').style.display=cubiertos.length?'':'none';
+  document.getElementById('cnt-titulo').textContent='Conteo de apertura — '+(cubiertos.length?'bebidas y cubiertos':'bebidas');
+  document.getElementById('cnt-cubiertos').innerHTML=cubiertos.map((m,i)=>`
+    <div class="cnt-card">
+      <div class="cnt-head">
+        <span class="cnt-name">${m.producto}</span>
+        <span class="cnt-prev">${prev(m.producto)}</span>
+      </div>
+      <div class="cnt-inputs solo">
+        <div><div class="cnt-lbl">Total contado</div><input type="number" inputmode="numeric" min="0" class="cnt-inp" id="cc-t-${i}" oninput="updProgreso()"></div>
+        <div><div class="cnt-lbl">&nbsp;</div><div class="cnt-total" style="background:none">unid.</div></div>
+      </div>
+    </div>`).join('');
+  document.getElementById('cnt-footer').style.display='block';
+  document.getElementById('cnt-entrada-wrap').style.display=usr.rol==='encargado'?'block':'none';
+  if(usr.rol==='encargado'){
+    document.getElementById('ent-prod').innerHTML='<option value="">Selecciona producto...</option>'+
+      SALON.maestro.map(m=>`<option value="${m.producto}">${m.producto} (${m.categoria})</option>`).join('');
+  }
+  updProgreso();
+}
+
+function updTotal(i){
+  const n=parseInt(document.getElementById('cb-n-'+i).value);
+  const b=parseInt(document.getElementById('cb-b-'+i).value);
+  const t=document.getElementById('cb-t-'+i);
+  const nn=isNaN(n)?null:n, bb=isNaN(b)?null:b;
+  t.textContent=(nn===null&&bb===null)?'—':(nn||0)+(bb||0);
+  document.getElementById('cb-n-'+i).classList.toggle('done',nn!==null);
+  document.getElementById('cb-b-'+i).classList.toggle('done',bb!==null);
+  updProgreso();
+}
+
+function leerConteo(){
+  const bebidas=SALON.maestro.filter(m=>m.categoria==='Bebida');
+  const cubiertos=SALON.maestro.filter(m=>m.categoria==='Cubierto');
+  const items=[],faltantes=[];
+  bebidas.forEach((m,i)=>{
+    const n=document.getElementById('cb-n-'+i).value;
+    const b=document.getElementById('cb-b-'+i).value;
+    if(n===''&&b===''){faltantes.push(m.producto);return;}
+    const nn=Math.max(0,parseInt(n)||0), bb=Math.max(0,parseInt(b)||0); // sin negativos
+    items.push({producto:m.producto,categoria:'Bebida',nevera:nn,bodega:bb,total:nn+bb});
+  });
+  cubiertos.forEach((m,i)=>{
+    const t=document.getElementById('cc-t-'+i).value;
+    if(t===''){faltantes.push(m.producto);return;}
+    items.push({producto:m.producto,categoria:'Cubierto',nevera:'',bodega:'',total:Math.max(0,parseInt(t)||0)});
+  });
+  return {items,faltantes};
+}
+
+function updProgreso(){
+  const {items,faltantes}=leerConteo();
+  const total=SALON.maestro.length;
+  document.getElementById('cnt-progress').textContent=`${items.length} de ${total} productos contados${faltantes.length?' · faltan: '+faltantes.slice(0,3).join(', ')+(faltantes.length>3?'…':''):''}`;
+  actualizarBtnConteo();
+}
+function actualizarBtnConteo(){
+  const {items}=leerConteo();
+  const obs=document.getElementById('nota-cnt').value;
+  document.getElementById('btn-cnt').disabled=!(items.length>0&&obsValida(obs));
+}
+
+async function guardarConteo(){
+  const {items,faltantes}=leerConteo();
+  const obs=document.getElementById('nota-cnt').value.trim();
+  if(!items.length){toast('No has contado ningún producto','err');return;}
+  if(!obsValida(obs)){toast('La observación es obligatoria','err');return;}
+  if(faltantes.length&&!confirm(`Faltan ${faltantes.length} producto(s) sin contar:\n${faltantes.join(', ')}\n\n¿Guardar igual?`))return;
+  document.getElementById('btn-cnt').disabled=true;
+  document.getElementById('sending-cnt').style.display='flex';
+  let ok=false,folio='',msgErr='';
+  try{
+    const j=await postOp({op:'conteoSalon',items,observacion:obs});
+    ok=j.status==='ok';folio=j.folio||'';msgErr=j.msg||'';
+  }catch(e){ok=false;}
+  document.getElementById('sending-cnt').style.display='none';
+  if(ok){
+    toast(`${folio} · Conteo guardado (${items.length} productos)`,'ok');
+    document.getElementById('nota-cnt').value='';
+    salonCargado=false;consumoCargado=false; // el consumo del día cambió
+    cargarSalon(); // refresca "último conteo"
+  }else{
+    // Los números siguen en pantalla: se puede reintentar sin recontar
+    document.getElementById('btn-cnt').disabled=false;
+    toast(msgErr||'No se pudo guardar — tus números siguen aquí, reintenta','err');
+  }
+}
+
+async function guardarEntradaSalon(){
+  const prod=document.getElementById('ent-prod').value;
+  const qty=parseInt(document.getElementById('qty-ent').value)||0;
+  const obs=document.getElementById('nota-ent').value.trim();
+  if(!prod){toast('Selecciona un producto','err');return;}
+  if(qty<=0){toast('Cantidad inválida','err');return;}
+  if(!obsValida(obs)){toast('La observación es obligatoria','err');return;}
+  document.getElementById('btn-ent').disabled=true;
+  document.getElementById('sending-ent').style.display='flex';
+  let ok=false,folio='',msgErr='';
+  try{
+    const j=await postOp({op:'entradaSalon',producto:prod,cantidad:qty,observacion:obs});
+    ok=j.status==='ok';folio=j.folio||'';msgErr=j.msg||'';
+  }catch(e){ok=false;}
+  document.getElementById('sending-ent').style.display='none';
+  document.getElementById('btn-ent').disabled=false;
+  if(ok){
+    toast(`${folio} · Entrada registrada — ${qty} und de ${prod}`,'ok');
+    document.getElementById('nota-ent').value='';
+    document.getElementById('qty-ent').value=1;
+    valNota('nota-ent','hint-ent','btn-ent');
+  }else{
+    toast(msgErr||'No se pudo registrar — reintenta','err');
+  }
+}
+
+// ============================================================
+// MÓDULO CONSUMO DEL DÍA (encargado)
+// ============================================================
+let PERIODOS=[], periodoSel=-1;
+async function cargarConsumo(){
+  const el=document.getElementById('consumo-body');
+  if(DEMO){el.innerHTML='<div class="empty">Sin datos en modo demo</div>';return;}
+  try{
+    const d=await postOp({op:'leer',que:'consumoSalon'});
+    if(d.status!=='ok')throw new Error(d.msg||'Error');
+    PERIODOS=d.periodos||[];
+    consumoCargado=true;
+    periodoSel=PERIODOS.length-1; // el más reciente
+    renderConsumo();
+  }catch(e){
+    el.innerHTML='<div class="empty">No se pudo cargar.<br><button class="retry-btn" onclick="cargarConsumo()">↻ Reintentar</button></div>';
+  }
+}
+function fmtDia(iso){ // '2026-07-09' -> 'mié 09/07'
+  const [y,m,dd]=iso.split('-').map(Number);
+  const f=new Date(y,m-1,dd);
+  return f.toLocaleDateString('es-CL',{weekday:'short',day:'2-digit',month:'2-digit'});
+}
+function setPeriodo(i){periodoSel=i;renderConsumo();}
+function renderConsumo(){
+  const chips=document.getElementById('consumo-dias');
+  const body=document.getElementById('consumo-body');
+  if(!PERIODOS.length){
+    chips.innerHTML='';
+    body.innerHTML='<div class="empty">Aún no hay dos conteos en días distintos.<br>El primer consumo aparecerá con el conteo de mañana.</div>';
+    return;
+  }
+  chips.innerHTML=PERIODOS.map((p,i)=>
+    `<div class="chip${i===periodoSel?' active':''}" onclick="setPeriodo(${i})">${fmtDia(p.desde)}</div>`
+  ).join('');
+  const p=PERIODOS[periodoSel];
+  const items=Object.entries(p.consumo).map(([prod,c])=>({prod,...c}));
+  const bebidas=items.filter(x=>x.categoria==='Bebida').sort((a,b)=>b.consumo-a.consumo);
+  const cubiertos=items.filter(x=>x.categoria==='Cubierto').sort((a,b)=>b.consumo-a.consumo);
+  const totalBebidas=bebidas.reduce((s,x)=>s+x.consumo,0);
+  let html=`<div class="stat-grid">
+    <div class="stat-card"><div class="stat-lbl">Consumo del ${fmtDia(p.desde)}</div><div class="stat-val" style="color:var(--teal)">${totalBebidas} <span style="font-size:12px;color:var(--text3)">und bebidas</span></div></div>
+    <div class="stat-card"><div class="stat-lbl">Cerrado por conteo del</div><div class="stat-val" style="font-size:16px;padding-top:6px">${fmtDia(p.hasta)}</div></div>
+  </div>`;
+  if(bebidas.length){
+    html+=`<div class="stk-cat-lbl">🥤 Bebidas — consumo del día</div>`;
+    html+=bebidas.map(x=>`
+      <div class="stk-row">
+        <span class="stk-nombre">${x.prod}${x.entradas?`<br><span style="font-size:10px;color:var(--text3)">incluye entrada de ${x.entradas} und</span>`:''}</span>
+        <span class="stk-qty ${x.consumo<0?'s-zero':'s-ok'}">${x.consumo<0?x.consumo+' ⚠️':x.consumo} und</span>
+      </div>`).join('');
+    html+=`<div style="font-size:10px;color:var(--text3);margin-top:6px">⚠️ Un consumo negativo indica error de conteo o entrada sin registrar.</div>`;
+  }
+  if(cubiertos.length){
+    html+=`<div class="stk-cat-lbl" style="margin-top:14px">🍴 Cubiertos — variación del día (merma si es positiva)</div>`;
+    html+=cubiertos.map(x=>`
+      <div class="stk-row">
+        <span class="stk-nombre">${x.prod}</span>
+        <span class="stk-qty ${x.consumo>0?'s-zero':'s-ok'}">${x.consumo>0?'−'+x.consumo:x.consumo===0?'sin pérdida ✓':'+'+(-x.consumo)}</span>
+      </div>`).join('');
+  }
+  body.innerHTML=html;
+}
+
+// ============================================================
+// HISTORIAL / STOCK / PEDIDOS / INFORME (base v1, + folio)
+// ============================================================
 function renderHist(){
   const el=document.getElementById('hist-list');
   document.getElementById('hist-cnt').textContent=movs.length+' registros';
@@ -480,41 +1238,74 @@ function renderHist(){
   el.innerHTML=movs.map(m=>`
     <div class="hist-item">
       <div class="hist-top">
-        <span class="hist-prod">${m.prod}</span>
-        <span class="badge ${m.tipo}">${m.tipo} · ${m.qty} ${m.unidad}</span>
+        <span class="hist-prod">${m.folio?'<span class="folio-tag">'+esc(m.folio)+'</span>':''}${esc(m.prod)}</span>
+        <span class="badge ${m.tipo}">${m.tipo} · ${m.qty} ${esc(m.unidad)}</span>
       </div>
-      <div class="hist-meta">${m.ts} · Turno ${m.turno} · ${m.user}${m.nota?' · '+m.nota:''}</div>
+      <div class="hist-meta">${m.ts} · Turno ${m.turno} · ${esc(m.user)}${m.nota?' · '+esc(m.nota):''}</div>
       <div class="hist-sync ${m.sync?'sync-ok':'sync-err'}">
         <i class="ti ${m.sync?'ti-cloud-check':'ti-cloud-off'}"></i>
-        ${m.sync?'Sincronizado con Google Sheets':'Sin sincronizar'}
+        ${m.sync?'Sincronizado con Google Sheets':'NO registrado — reintentar'}
       </div>
     </div>`).join('');
 }
 
 function renderStk(){
   const total=stk.length,sinStk=stk.filter(p=>p.s===0).length;
+  // KPIs salón (si ya cargó): total bebidas del último conteo + merma acumulada de cubiertos
+  const bebidasSalon=SALON.maestro.filter(m=>m.categoria==='Bebida');
+  const cubiertosSalon=SALON.maestro.filter(m=>m.categoria==='Cubierto');
+  let totBebidasSalon=null, mermaCubiertos=null;
+  if(salonCargado){
+    totBebidasSalon=bebidasSalon.reduce((s,m)=>s+(SALON.ultimo[m.producto]?.total??0),0);
+    mermaCubiertos=cubiertosSalon.reduce((s,m)=>{
+      const u=SALON.ultimo[m.producto], b=m.baseInicial;
+      return (u&&b!=null)?s+(b-u.total):s; // != cubre null y undefined
+    },0);
+  }
   document.getElementById('stat-grid').innerHTML=`
-    <div class="stat-card"><div class="stat-lbl">Total productos</div><div class="stat-val">${total}</div></div>
-    <div class="stat-card"><div class="stat-lbl">Movimientos hoy</div><div class="stat-val">${movs.length}</div></div>
-    <div class="stat-card"><div class="stat-lbl" style="color:var(--green)">Con stock</div><div class="stat-val" style="color:var(--green)">${total-sinStk}</div></div>
-    <div class="stat-card"><div class="stat-lbl" style="color:var(--red-t)">Sin stock</div><div class="stat-val" style="color:var(--red-t)">${sinStk}</div></div>`;
+    <div class="stat-card"><div class="stat-lbl">Barra: productos</div><div class="stat-val">${total}</div></div>
+    <div class="stat-card"><div class="stat-lbl" style="color:var(--red-t)">Barra: sin stock</div><div class="stat-val" style="color:var(--red-t)">${sinStk}</div></div>
+    <div class="stat-card"><div class="stat-lbl" style="color:var(--teal)">Salón: bebidas (últ. conteo)</div><div class="stat-val" style="color:var(--teal)">${totBebidasSalon===null?'—':totBebidasSalon}</div></div>
+    ${cubiertosSalon.length?`<div class="stat-card"><div class="stat-lbl" style="color:${mermaCubiertos>0?'var(--amber)':'var(--green)'}">Cubiertos: merma vs base</div><div class="stat-val" style="color:${mermaCubiertos>0?'var(--amber)':'var(--green)'}">${mermaCubiertos===null?'—':(mermaCubiertos>0?'−':'')+Math.abs(mermaCubiertos)}</div></div>`:''}`;
+  // ---- SALÓN primero (lo operativo del día), luego barra por categoría ----
+  let html='';
+  if(salonCargado){
+    html+=`<div class="stk-cat-lbl" style="color:var(--teal)">🥤 Salón — Bebidas (último conteo)</div>`;
+    html+=bebidasSalon.map(m=>{
+      const u=SALON.ultimo[m.producto];
+      return`<div class="stk-row">
+        <span class="stk-nombre">${m.producto}${u?`<br><span style="font-size:10px;color:var(--text3)">Nevera ${u.nevera||0} · Bodega ${u.bodega||0} · ${u.fecha}</span>`:''}</span>
+        <span class="stk-qty ${u?(u.total===0?'s-zero':'s-ok'):''}" style="${u?'':'color:var(--text3)'}">${u?u.total+' und':'sin conteo'}</span>
+      </div>`;}).join('');
+    if(cubiertosSalon.length)html+=`<div class="stk-cat-lbl" style="color:var(--teal)">🍴 Salón — Cubiertos (último conteo vs base)</div>`;
+    html+=cubiertosSalon.map(m=>{
+      const u=SALON.ultimo[m.producto], b=m.baseInicial;
+      const diff=(u&&b!=null)?b-u.total:null;
+      const diffTxt=diff===null?'':(diff>0?` · faltan ${diff}`:diff<0?` · sobran ${-diff}`:' · completo ✓');
+      return`<div class="stk-row">
+        <span class="stk-nombre">${m.producto}<br><span style="font-size:10px;color:var(--text3)">Base: ${b??'—'}${u?' · Últ: '+u.total+' ('+u.fecha+')':''}</span></span>
+        <span class="stk-qty ${diff>0?'s-zero':'s-ok'}" style="${u?'':'color:var(--text3)'}">${u?u.total+diffTxt:'sin conteo'}</span>
+      </div>`;}).join('');
+  }
   const cats=[...new Set(stk.map(p=>p.cat))];
-  document.getElementById('stk-list').innerHTML=cats.map(c=>`
+  html+=`<div class="stk-cat-lbl" style="margin-top:16px;color:var(--coral)">🍸 Barra — Stock actual</div>`;
+  html+=cats.map(c=>`
     <div class="stk-cat-lbl">${c}</div>
     ${stk.filter(p=>p.cat===c).map(p=>`
       <div class="stk-row">
         <span class="stk-nombre">${p.nombre}</span>
         <span class="stk-qty ${p.s===0?'s-zero':'s-ok'}">${p.s} ${p.unidad}</span>
       </div>`).join('')}`).join('');
+  document.getElementById('stk-list').innerHTML=html;
 }
 
 function descargar(){
   const fecha=new Date().toLocaleDateString('es-CL');
-  let txt=`INFORME BODEGA BARRA — HOLY MOLY TOBALABA\nFecha: ${fecha}\nGenerado por: ${usr.nombre}\n\n`;
+  let txt=`INFORME HMT OPS — HOLY MOLY TOBALABA\nFecha: ${fecha}\nGenerado por: ${usr.nombre}\n\n`;
   txt+=`MOVIMIENTOS DEL DÍA (${movs.length})\n${'─'.repeat(55)}\n`;
   if(!movs.length)txt+='Sin movimientos.\n';
   [...movs].reverse().forEach(m=>{
-    txt+=`${m.ts} | ${m.tipo.toUpperCase()} | ${m.prod} | ${m.qty} ${m.unidad} | Turno ${m.turno} | ${m.user}${m.nota?' | '+m.nota:''} | ${m.sync?'SYNC OK':'SIN SYNC'}\n`;
+    txt+=`${m.folio?m.folio+' | ':''}${m.ts} | ${m.tipo.toUpperCase()} | ${m.prod} | ${m.qty} ${m.unidad} | Turno ${m.turno} | ${m.user}${m.nota?' | '+m.nota:''} | ${m.sync?'SYNC OK':'SIN SYNC'}\n`;
   });
   txt+=`\nSTOCK ACTUAL\n${'─'.repeat(55)}\n`;
   [...new Set(stk.map(p=>p.cat))].forEach(c=>{
@@ -525,35 +1316,22 @@ function descargar(){
   });
   const a=document.createElement('a');
   a.href=URL.createObjectURL(new Blob([txt],{type:'text/plain;charset=utf-8'}));
-  a.download=`Bodega_HM_${fecha.replace(/\//g,'-')}.txt`;
+  a.download=`HMT_OPS_${fecha.replace(/\//g,'-')}.txt`;
   a.click();
   toast('Informe descargado','ok');
 }
 
-let PED=[]; // se llena en vivo desde el Sheet (accion=pedidos), carga perezosa al abrir la pestaña
-let pedCargado=false;
-
-function goTab(t){
-  ['registro','historial','stock','pedidos'].forEach(id=>{
-    document.getElementById('tab-'+id).style.display=id===t?'block':'none';
-  });
-  document.querySelectorAll('.nav-tab').forEach((btn,i)=>{
-    btn.classList.toggle('active',['registro','historial','stock','pedidos'][i]===t);
-  });
-  if(t==='pedidos' && !pedCargado) cargarPedidos();
-}
-
 async function cargarPedidos(){
   const el=document.getElementById('ped-list');
+  if(DEMO){pedCargado=true;renderPedidos();return;}
   try{
-    const r=await fetch(SCRIPT_URL+"?accion=pedidos");
-    const d=await r.json();
+    const d=await postOp({op:'leer',que:'pedidos'});
     if(d.status!=='ok') throw new Error(d.msg||'Error');
     PED=d.pedidos||[];
     pedCargado=true;
     renderPedidos();
   }catch(e){
-    el.innerHTML='<div class="empty">No se pudo cargar pedidos — recarga la página</div>';
+    el.innerHTML='<div class="empty">No se pudo cargar.<br><button class="retry-btn" onclick="cargarPedidos()">↻ Reintentar</button></div>';
   }
 }
 
@@ -581,16 +1359,11 @@ function renderPedidos(){
   el.innerHTML=html;
 }
 
-
-// SEMANA_ACTUAL ya se declaró más arriba (junto a stk) y se actualiza al
-// cargar la app con la semana que calcula el Sheet — no depende de un mapa
-// de fechas que se agote.
-
 async function abrirInforme() {
   if(!usr || usr.rol !== 'encargado') { toast('Solo encargados pueden generar el informe','err'); return; }
   const numActual = parseInt(SEMANA_ACTUAL.replace('S',''), 10) || 27;
   const respuesta = prompt('¿Informe de qué semana? (ej: S27)\nSemana actual: ' + SEMANA_ACTUAL, SEMANA_ACTUAL);
-  if(respuesta === null) return; // canceló
+  if(respuesta === null) return;
   let semanaPedida = respuesta.trim().toUpperCase();
   if(!/^S\d+$/.test(semanaPedida)){ toast('Formato inválido. Usa por ejemplo S27.','err'); return; }
   const numPedida = parseInt(semanaPedida.replace('S',''), 10);
@@ -599,9 +1372,7 @@ async function abrirInforme() {
   btn.innerHTML = '<i class="ti ti-loader"></i> Consultando Google Sheets...';
   btn.disabled = true;
   try {
-    const url = SCRIPT_URL + "?accion=informe&semana=" + semanaPedida;
-    const resp = await fetch(url);
-    const data = await resp.json();
+    const data = await postOp({op:'informe', semana: semanaPedida});
     if(data.status !== 'ok') throw new Error(data.msg||'Error');
     generarPDFSemanal(data);
   } catch(e) {
@@ -612,14 +1383,13 @@ async function abrirInforme() {
 }
 
 function generarPDFSemanal(data) {
-  const movs = data.movimientos || [];
+  const movsInf = data.movimientos || [];
   const semana = data.semana || SEMANA_ACTUAL;
   const fechas = data.fechas || "";
   const bases = data.bases || {};
 
-  // Agrupar por producto
   const productos = {};
-  movs.forEach(m => {
+  movsInf.forEach(m => {
     if(!productos[m.producto]) {
       productos[m.producto] = { entradas:0, salidas:0, mermas:0, traspasos:0, correcciones:0, unidad:m.unidad };
     }
@@ -631,11 +1401,9 @@ function generarPDFSemanal(data) {
     else if(m.tipo==='corrección'||m.tipo==='correccion') p.correcciones += Number(m.cantidad);
   });
 
-  // Totales generales
   let totEnt=0, totSal=0, totMer=0, totTras=0;
   Object.values(productos).forEach(p => { totEnt+=p.entradas; totSal+=p.salidas; totMer+=p.mermas; totTras+=p.traspasos; });
 
-  // Construir HTML del informe
   const cats = [...new Set(stk.map(p=>p.cat))];
   let tablas = '';
   cats.forEach(cat => {
@@ -643,11 +1411,11 @@ function generarPDFSemanal(data) {
     const filas = prods.map(p => {
       const m = productos[p.nombre] || {entradas:0,salidas:0,mermas:0,traspasos:0};
       const baseInfo = bases[p.nombre];
-      const base = baseInfo ? baseInfo.base : null; // viene del Sheet, no se reconstruye acá
+      const base = baseInfo ? baseInfo.base : null;
       const volumenL = baseInfo ? baseInfo.volumenL : null;
       const baseTxt = (base===null || base===undefined) ? 'N/D' : base;
       const final = (base===null || base===undefined) ? 'N/D' : (base + m.entradas - m.salidas - m.mermas - m.traspasos);
-      const finalLitrosTxt = (final==='N/D') ? '—' : (volumenL ? (final*volumenL).toFixed(2) : '—'); // sin sufijo: puede ser L o kg según el producto
+      const finalLitrosTxt = (final==='N/D') ? '—' : (volumenL ? (final*volumenL).toFixed(2) : '—');
       const hayMov = m.entradas||m.salidas||m.mermas||m.traspasos;
       const rowStyle = hayMov ? 'background:#F0FBF5' : '';
       return `<tr style="${rowStyle}">
@@ -668,7 +1436,7 @@ function generarPDFSemanal(data) {
   });
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
-  <title>Informe ${semana} — Bodega HM Tobalaba</title>
+  <title>Informe ${semana} — HMT OPS</title>
   <style>
     body{font-family:Arial,sans-serif;margin:0;padding:20px;color:#1A1A1A}
     @media print{body{padding:10px}.no-print{display:none}button{display:none}}
@@ -676,13 +1444,11 @@ function generarPDFSemanal(data) {
   </head><body>
   <div style="text-align:center;margin-bottom:20px">
     <div style="background:#085041;color:#fff;padding:12px 20px;border-radius:8px;display:inline-block;margin-bottom:8px">
-      <div style="font-size:18px;font-weight:700">BODEGA BARRA — HOLY MOLY TOBALABA</div>
-      <div style="font-size:13px;margin-top:4px">Informe Semanal ${semana}  ·  ${fechas}</div>
+      <div style="font-size:18px;font-weight:700">HMT OPS — HOLY MOLY TOBALABA</div>
+      <div style="font-size:13px;margin-top:4px">Informe Semanal Barra ${semana}  ·  ${fechas}</div>
     </div>
     <div style="font-size:11px;color:#888;margin-top:6px">Generado por: ${usr.nombre}  ·  ${new Date().toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
   </div>
-
-  <!-- RESUMEN KPIs -->
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
     <div style="background:#FAECE7;border:1px solid #F5C4B3;border-radius:8px;padding:10px;text-align:center">
       <div style="font-size:10px;color:#993C1D;font-weight:600;text-transform:uppercase">Total Salidas</div>
@@ -701,8 +1467,6 @@ function generarPDFSemanal(data) {
       <div style="font-size:28px;font-weight:700;color:#533AB7">${totTras}</div>
     </div>
   </div>
-
-  <!-- TABLA DETALLE -->
   <table style="width:100%;border-collapse:collapse;font-size:11px">
     <thead>
       <tr style="background:#2C2C2A;color:#fff">
@@ -719,11 +1483,9 @@ function generarPDFSemanal(data) {
     </thead>
     <tbody>${tablas}</tbody>
   </table>
-
   <div style="margin-top:20px;font-size:10px;color:#888;text-align:center;border-top:1px solid #eee;padding-top:10px">
-    Holy Moly Tobalaba · Bodega Barra · ${semana} · ${fechas} · ${movs.length} movimientos registrados
+    Holy Moly Tobalaba · HMT OPS · ${semana} · ${fechas} · ${movsInf.length} movimientos registrados
   </div>
-
   <div class="no-print" style="margin-top:20px;text-align:center">
     <button onclick="window.print()" style="background:#085041;color:#fff;border:none;padding:12px 28px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer">
       🖨 Imprimir / Guardar PDF
