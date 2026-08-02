@@ -171,6 +171,50 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
 .cnt-inp.done{background:var(--teal-c);border-color:#9FE1CB}
 .cnt-total{height:42px;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;border-radius:var(--radius);background:var(--gray-c);color:var(--text2)}
 .cnt-progress{font-size:11px;color:var(--text3);text-align:center;margin-bottom:8px}
+/* Acceso a la entrada de pedido: visible al abrir la pestaña, plegado para no
+   estorbar el conteo diario (la entrada se registra ~1 vez por semana). */
+.entrada-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:8px;
+  background:#fff;border:1.5px dashed var(--teal);color:var(--teal);border-radius:14px;
+  padding:13px 15px;font-size:13.5px;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:10px}
+.entrada-toggle:active{background:#f0f7f5}
+.entrada-toggle i{font-size:16px}
+.entrada-toggle.abierto{border-style:solid;background:#f0f7f5}
+/* ---- Pedido sugerido de bebidas ---- */
+.ped-switch{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.ped-tab{height:40px;border-radius:12px;border:1.5px solid var(--border);background:#fff;
+  font-size:13px;font-weight:700;color:var(--text2);font-family:inherit;cursor:pointer}
+.ped-tab.activa{background:var(--teal);border-color:var(--teal);color:#fff}
+.ped-row{display:flex;align-items:center;gap:10px;background:#fff;border:1.5px solid var(--border);
+  border-radius:14px;padding:11px 12px;margin-bottom:7px}
+.ped-row.urge{border-color:var(--red-t);background:#FDF3F0}
+.ped-row.pronto{border-color:var(--amber)}
+.ped-info{flex:1;min-width:0}
+.ped-nom{font-size:13.5px;font-weight:700;line-height:1.2}
+.ped-sub{font-size:10.5px;color:var(--text3);margin-top:3px}
+.ped-badge{font-size:9px;font-weight:800;letter-spacing:.05em;padding:2px 6px;border-radius:5px;
+  text-transform:uppercase;margin-right:5px;vertical-align:middle}
+.b-quiebre{background:var(--red-t);color:#fff}
+.b-critico{background:#C2410C;color:#fff}
+.b-bajo{background:var(--amber);color:#fff}
+.b-ok{background:#E6EFEA;color:var(--teal)}
+.ped-cajas{display:flex;align-items:center;gap:5px;flex-shrink:0}
+.ped-cajas button{width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border);
+  background:#fff;font-size:16px;font-weight:700;color:var(--text2);cursor:pointer;font-family:inherit}
+.ped-cajas input{width:46px;height:32px;text-align:center;border-radius:8px;border:1.5px solid var(--border);
+  font-size:15px;font-weight:800;font-family:inherit;color:var(--text)}
+.ped-cajas .cj{font-size:9.5px;color:var(--text3);width:26px;line-height:1.1}
+.ped-total{background:var(--teal);color:#fff;border-radius:14px;padding:13px 15px;margin-top:14px;
+  font-size:14px;font-weight:700;text-align:center}
+.ped-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.btn-ped{height:46px;border-radius:13px;border:none;font-size:13px;font-weight:700;color:#fff;
+  font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-ped.copiar{background:#25D366}
+.btn-ped.pdf{background:#B23B2E}
+.btn-ped:active{opacity:.85}
+@media print{
+  body>*{display:none!important}
+  #print-area{display:block!important}
+}
 
 /* REQUERIMIENTOS */
 .req-card{background:#fff;border:1.5px solid var(--border);border-radius:var(--radius);padding:12px 13px;margin-bottom:8px}
@@ -333,26 +377,16 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
     <div class="banner banner-warn" id="cnt-hoy-warn" style="display:none">
       <i class="ti ti-alert-triangle"></i> Hoy ya se guardó un conteo — si guardas otro, reemplaza al anterior
     </div>
-    <div class="cnt-progress" id="cnt-progress"></div>
-    <div class="sec-lbl" style="margin-top:4px">🥤 Bebidas — Nevera y Bodega</div>
-    <div id="cnt-bebidas"><div class="empty">Cargando productos...</div></div>
-    <div class="sec-lbl" style="margin-top:14px" id="cnt-cubiertos-lbl">🍴 Cubiertos y ceniceros — total del local</div>
-    <div id="cnt-cubiertos"></div>
-    <div class="reg-panel" id="cnt-footer" style="display:none">
-      <div class="sec-lbl">Observación <span class="req-star">* obligatoria</span></div>
-      <textarea class="note-inp" id="nota-cnt" placeholder="Ej: conteo normal de apertura / faltó contar X porque... (mínimo 5 letras)" oninput="valNota('nota-cnt','hint-cnt','btn-cnt')"></textarea>
-      <div class="note-hint" id="hint-cnt">Sin observación no se puede guardar.</div>
-      <button class="btn-conf teal" id="btn-cnt" onclick="guardarConteo()" disabled>
-        <i class="ti ti-device-floppy"></i> Guardar conteo del día
-      </button>
-      <div id="sending-cnt" class="sending" style="display:none">
-        <i class="ti ti-loader"></i> Guardando en Google Sheets...
-      </div>
-    </div>
-    <!-- Entrada semanal salón: solo encargado -->
+    <!-- Entrada semanal del salón: solo encargado. Va ARRIBA y plegada porque
+         antes vivía al final de la pestaña, después de 16 bebidas y del botón
+         de guardar — nadie la encontraba. Olvidar registrar la entrada hace
+         que el consumo del día de la recepción salga negativo. -->
     <div id="cnt-entrada-wrap" style="display:none">
-      <div class="sec-lbl" style="margin-top:18px">📦 Entrada de pedido (solo encargados)</div>
-      <div class="reg-panel" style="margin-top:6px">
+      <button class="entrada-toggle" id="ent-toggle" onclick="toggleEntrada()">
+        <span><i class="ti ti-package-import"></i> Registrar entrada de pedido</span>
+        <i class="ti ti-chevron-down" id="ent-chevron"></i>
+      </button>
+      <div class="reg-panel" id="ent-panel" style="display:none;margin-top:6px">
         <div class="sec-lbl">Producto</div>
         <select id="ent-prod" style="margin-bottom:13px"></select>
         <div class="sec-lbl">Cantidad recibida</div>
@@ -370,6 +404,22 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
         <div id="sending-ent" class="sending" style="display:none">
           <i class="ti ti-loader"></i> Guardando...
         </div>
+      </div>
+    </div>
+    <div class="cnt-progress" id="cnt-progress"></div>
+    <div class="sec-lbl" style="margin-top:4px">🥤 Bebidas — Nevera y Bodega</div>
+    <div id="cnt-bebidas"><div class="empty">Cargando productos...</div></div>
+    <div class="sec-lbl" style="margin-top:14px" id="cnt-cubiertos-lbl">🍴 Cubiertos y ceniceros — total del local</div>
+    <div id="cnt-cubiertos"></div>
+    <div class="reg-panel" id="cnt-footer" style="display:none">
+      <div class="sec-lbl">Observación <span class="req-star">* obligatoria</span></div>
+      <textarea class="note-inp" id="nota-cnt" placeholder="Ej: conteo normal de apertura / faltó contar X porque... (mínimo 5 letras)" oninput="valNota('nota-cnt','hint-cnt','btn-cnt')"></textarea>
+      <div class="note-hint" id="hint-cnt">Sin observación no se puede guardar.</div>
+      <button class="btn-conf teal" id="btn-cnt" onclick="guardarConteo()" disabled>
+        <i class="ti ti-device-floppy"></i> Guardar conteo del día
+      </button>
+      <div id="sending-cnt" class="sending" style="display:none">
+        <i class="ti ti-loader"></i> Guardando en Google Sheets...
       </div>
     </div>
   </div>
@@ -408,10 +458,43 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
 
   <!-- PEDIDOS -->
   <div id="tab-pedidos" class="tab-body" style="display:none">
-    <div class="banner banner-ok">
-      <i class="ti ti-cloud"></i> Conectado a Google Sheets en tiempo real
+    <div class="ped-switch">
+      <button class="ped-tab activa" id="pt-bebidas" onclick="setPedVista('bebidas')">🥤 Bebidas</button>
+      <button class="ped-tab" id="pt-barra" onclick="setPedVista('barra')">🍾 Barra</button>
     </div>
-    <div id="ped-list"><div class="empty">Cargando pedidos...</div></div>
+
+    <!-- Pedido sugerido de bebidas: se pide por CAJA porque así lo carga Compras -->
+    <div id="ped-vista-bebidas">
+      <div id="pedsal-aviso"></div>
+      <div id="pedsal-list"><div class="empty">Cargando pedido sugerido...</div></div>
+      <div id="pedsal-acciones" style="display:none">
+        <div class="ped-total" id="pedsal-total"></div>
+        <div class="ped-btns">
+          <button class="btn-ped copiar" onclick="copiarPedidoTexto()">
+            <i class="ti ti-brand-whatsapp"></i> Copiar para WhatsApp
+          </button>
+          <button class="btn-ped pdf" onclick="descargarPedidoPDF()">
+            <i class="ti ti-file-type-pdf"></i> Descargar PDF
+          </button>
+        </div>
+        <button class="btn-conf teal" id="btn-pedsal" onclick="registrarPedido()" style="margin-top:10px">
+          <i class="ti ti-send"></i> Dejar registrado el pedido enviado
+        </button>
+        <div class="note-hint" style="text-align:center;margin-top:6px">
+          Registrarlo evita que mañana te lo vuelva a sugerir completo.
+        </div>
+        <div id="sending-pedsal" class="sending" style="display:none">
+          <i class="ti ti-loader"></i> Guardando...
+        </div>
+      </div>
+    </div>
+
+    <div id="ped-vista-barra" style="display:none">
+      <div class="banner banner-ok">
+        <i class="ti ti-cloud"></i> Conectado a Google Sheets en tiempo real
+      </div>
+      <div id="ped-list"><div class="empty">Cargando pedidos...</div></div>
+    </div>
   </div>
 </div>
 
@@ -598,14 +681,18 @@ async function doLogin(){
   if(r.status!=='ok'){loginEnCurso=false;e.textContent=r.msg||'Nombre o PIN incorrecto.';rPin();return;}
   usr={nombre:r.nombre,rol:r.rol,pin:pin}; // el pin firma cada operación; nunca se persiste
   tipo='salida';turno='AM';cat='Todos';sel=null;selReq=null;pin='';rPin();
-  // Una sola llamada trae TODO lo del rol: las pestañas abren instantáneas
-  e.textContent='Cargando tus datos...';
-  if(!DEMO){
+  // El servidor ya devolvió el panel dentro de la misma respuesta del login:
+  // un solo viaje en vez de dos. Con el arranque en frío de Apps Script eso
+  // era la mitad de la espera al entrar.
+  if(DEMO){salonCargado=true;pedCargado=true;}
+  else if(r.salon||r.stock||r.consumo){aplicarPanel(r);}
+  else{
+    e.textContent='Cargando tus datos...';           // respaldo por si el servidor es antiguo
     try{
       const p=await postOp({op:'panel'});
       if(p.status==='ok')aplicarPanel(p);
     }catch(err){/* las pestañas reintentarán individualmente */}
-  }else{salonCargado=true;pedCargado=true;}
+  }
   loginEnCurso=false;e.textContent='';
   document.getElementById('scr-login').style.display='none';
   document.getElementById('scr-main').style.display='block';
@@ -660,6 +747,7 @@ function logout(){
   usr=null;pin='';rPin();
   movs=[];reqMios=[];REQS=[];PED=[];PERIODOS=[];periodoSel=-1;reqPend=0;
   salonCargado=false;pedCargado=false;consumoCargado=false;sel=null;selReq=null;
+  PEDSAL=null;pedsalCargado=false;
   clearInterval(pollBadge);
   document.getElementById('sel-usr').value='';
   document.getElementById('lerr').textContent='';
@@ -695,7 +783,12 @@ function goTab(t){
   }
   if(t==='stock'&&!salonCargado)cargarSalon().then(()=>renderStk()); // visión total: barra + salón
   if(t==='consumo'){consumoCargado?renderConsumo():cargarConsumo();}
-  if(t==='pedidos'){pedCargado?renderPedidos():cargarPedidos();}
+  // La pestaña abre en Bebidas: es el pedido que se arma cada lunes. El de
+  // barra queda a un toque, ya cargado desde el panel del login.
+  if(t==='pedidos'){
+    if(pedCargado)renderPedidos();
+    if(pedsalCargado)renderPedidoSalon(); else cargarPedidoSalon();
+  }
   if(t==='reque'){
     document.getElementById('req-crear').style.display=usr.rol==='bartender'?'block':'none';
     document.getElementById('req-bandeja').style.display=usr.rol==='encargado'?'block':'none';
@@ -807,6 +900,14 @@ function setTurno(t){
 function adjQ(d){const i=document.getElementById('qty');i.value=Math.max(1,(parseInt(i.value)||0)+d);}
 function adjQR(d){const i=document.getElementById('qty-req');i.value=Math.max(1,(parseInt(i.value)||0)+d);}
 function adjQE(d){const i=document.getElementById('qty-ent');i.value=Math.max(1,(parseInt(i.value)||0)+d);}
+function toggleEntrada(){
+  const p=document.getElementById('ent-panel'), b=document.getElementById('ent-toggle');
+  const abrir=p.style.display==='none';
+  p.style.display=abrir?'block':'none';
+  b.classList.toggle('abierto',abrir);
+  document.getElementById('ent-chevron').className='ti ti-chevron-'+(abrir?'up':'down');
+  if(abrir)setTimeout(()=>p.scrollIntoView({behavior:'smooth',block:'nearest'}),60);
+}
 
 async function confirmar(){
   if(sel===null)return;
@@ -1319,6 +1420,179 @@ function descargar(){
   a.download=`HMT_OPS_${fecha.replace(/\//g,'-')}.txt`;
   a.click();
   toast('Informe descargado','ok');
+}
+
+// ---------- PEDIDO SUGERIDO DE BEBIDAS ----------
+// Se cuenta por unidad pero se pide por CAJA: así lo carga Compras. El servidor
+// propone las cajas; el encargado puede ajustarlas antes de enviar.
+let PEDSAL=null, pedsalCargado=false;
+
+function setPedVista(v){
+  const esBeb=v==='bebidas';
+  document.getElementById('ped-vista-bebidas').style.display=esBeb?'block':'none';
+  document.getElementById('ped-vista-barra').style.display=esBeb?'none':'block';
+  document.getElementById('pt-bebidas').classList.toggle('activa',esBeb);
+  document.getElementById('pt-barra').classList.toggle('activa',!esBeb);
+  if(esBeb&&!pedsalCargado)cargarPedidoSalon();
+  if(!esBeb&&!pedCargado)cargarPedidos();
+}
+
+async function cargarPedidoSalon(){
+  const el=document.getElementById('pedsal-list');
+  el.innerHTML='<div class="empty"><i class="ti ti-loader spin"></i> Calculando pedido...</div>';
+  try{
+    const r=await postOp({op:'pedidoSalon'});
+    if(r.status!=='ok')throw new Error(r.msg||'No se pudo calcular');
+    PEDSAL=r; pedsalCargado=true; renderPedidoSalon();
+  }catch(err){
+    el.innerHTML='<div class="empty">No se pudo cargar.<br><button class="retry-btn" onclick="cargarPedidoSalon()">↻ Reintentar</button></div>';
+  }
+}
+
+function renderPedidoSalon(){
+  if(!PEDSAL)return;
+  const av=document.getElementById('pedsal-aviso');
+  const hoy=new Date().toLocaleDateString('es-CL',{day:'2-digit',month:'2-digit'});
+  // El stock sale del último conteo: si no es de hoy, el pedido se calcula
+  // sobre datos viejos y hay que decirlo, no esconderlo.
+  av.innerHTML=PEDSAL.vigente
+    ? `<div class="banner banner-ok"><i class="ti ti-circle-check"></i> Calculado con el conteo de hoy (${hoy})</div>`
+    : `<div class="banner banner-warn"><i class="ti ti-alert-triangle"></i> El último conteo es del ${PEDSAL.fechaBase||'—'}, no de hoy. Conviene contar antes de pedir.</div>`;
+
+  const ETI={quiebre:['QUIEBRE','b-quiebre'],critico:['CRÍTICO','b-critico'],
+             bajo:['BAJO','b-bajo'],ok:['OK','b-ok'],'sin-datos':['SIN CONTEO','b-ok']};
+  let html='';
+  PEDSAL.items.forEach((x,i)=>{
+    const [txt,cls]=ETI[x.estado]||ETI.ok;
+    const clase=x.estado==='quiebre'||x.estado==='critico'?' urge':(x.estado==='bajo'?' pronto':'');
+    let sub;
+    if(x.stock===null)sub='Sin conteo — cuéntala para que entre al pedido';
+    else if(x.diasCobertura!==null)sub=`Quedan ${x.stock} u · alcanza ${x.diasCobertura} día(s)`;
+    else sub=`Quedan ${x.stock} u · sin consumo medido aún`;
+    if(x.enTransito>0)sub+=` · ${x.enTransito} u ya pedidas`;
+    const cajas=x.cajas===null?0:x.cajas;
+    html+=`<div class="ped-row${clase}">
+      <div class="ped-info">
+        <div class="ped-nom"><span class="ped-badge ${cls}">${txt}</span>${esc(x.producto)}</div>
+        <div class="ped-sub">${sub}</div>
+      </div>
+      <div class="ped-cajas">
+        <button onclick="ajCajas(${i},-1)">−</button>
+        <input type="number" inputmode="numeric" min="0" id="pc-${i}" value="${cajas}" oninput="totalPedido()">
+        <button onclick="ajCajas(${i},1)">+</button>
+        <span class="cj">cajas<br>×${x.unidPorCaja}</span>
+      </div>
+    </div>`;
+  });
+  document.getElementById('pedsal-list').innerHTML=html||'<div class="empty">Sin bebidas activas</div>';
+  document.getElementById('pedsal-acciones').style.display=PEDSAL.items.length?'block':'none';
+  totalPedido();
+}
+
+function ajCajas(i,d){
+  const inp=document.getElementById('pc-'+i);
+  inp.value=Math.max(0,(parseInt(inp.value)||0)+d);
+  totalPedido();
+}
+
+function lineasPedido(){
+  if(!PEDSAL)return [];
+  return PEDSAL.items.map((x,i)=>{
+    const c=Math.max(0,parseInt((document.getElementById('pc-'+i)||{}).value)||0);
+    return {producto:x.producto,cajas:c,unidPorCaja:x.unidPorCaja,unidades:c*x.unidPorCaja};
+  }).filter(l=>l.cajas>0);
+}
+
+function totalPedido(){
+  const l=lineasPedido();
+  const cajas=l.reduce((s,x)=>s+x.cajas,0), und=l.reduce((s,x)=>s+x.unidades,0);
+  document.getElementById('pedsal-total').textContent=
+    cajas?`${cajas} caja(s) · ${und} unidades · ${l.length} producto(s)`:'Sin cantidades — ajusta arriba';
+  const b=document.getElementById('btn-pedsal');
+  if(b)b.disabled=!cajas;
+}
+
+function textoPedido(){
+  const l=lineasPedido();
+  const f=new Date().toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'});
+  let t=`*PEDIDO BEBIDAS — HOLY MOLY TOBALABA*\n${f}\n\n`;
+  l.forEach(x=>{t+=`• ${x.producto}: *${x.cajas}* caja(s)  (${x.unidades} u)\n`;});
+  t+=`\n*TOTAL: ${l.reduce((s,x)=>s+x.cajas,0)} cajas*\nSolicita: ${usr?usr.nombre:''}`;
+  return t;
+}
+
+async function copiarPedidoTexto(){
+  const t=textoPedido();
+  if(!lineasPedido().length){toast('No hay cantidades que copiar','err');return;}
+  try{
+    await navigator.clipboard.writeText(t);
+    toast('Copiado — pégalo en WhatsApp','ok');
+  }catch(err){
+    // En algunos navegadores móviles el portapapeles requiere otro camino
+    const ta=document.createElement('textarea');
+    ta.value=t; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{document.execCommand('copy');toast('Copiado — pégalo en WhatsApp','ok');}
+    catch(e2){toast('No se pudo copiar solo — mantén presionado el texto del PDF','err');}
+    document.body.removeChild(ta);
+  }
+}
+
+function descargarPedidoPDF(){
+  const l=lineasPedido();
+  if(!l.length){toast('No hay cantidades que imprimir','err');return;}
+  const f=new Date().toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const filas=l.map(x=>`<tr><td>${esc(x.producto)}</td><td class="n">${x.cajas}</td>
+      <td class="n">${x.unidPorCaja}</td><td class="n">${x.unidades}</td></tr>`).join('');
+  const w=window.open('','_blank');
+  if(!w){toast('Permite las ventanas emergentes para generar el PDF','err');return;}
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Pedido bebidas ${f}</title>
+    <style>
+      body{font-family:Arial,Helvetica,sans-serif;color:#111;padding:26px;max-width:720px;margin:auto}
+      h1{font-size:19px;margin:0;letter-spacing:.5px}
+      .sub{font-size:12px;color:#666;margin:4px 0 20px}
+      table{width:100%;border-collapse:collapse;font-size:13px}
+      th{text-align:left;background:#14574A;color:#fff;padding:8px 10px;font-size:11px;
+         letter-spacing:.06em;text-transform:uppercase}
+      td{padding:8px 10px;border-bottom:1px solid #e3e3e3}
+      td.n,th.n{text-align:right}
+      tfoot td{font-weight:bold;border-top:2px solid #111;border-bottom:none;font-size:14px}
+      .pie{margin-top:22px;font-size:11px;color:#666;border-top:1px solid #ddd;padding-top:10px}
+    </style></head><body>
+    <h1>PEDIDO DE BEBIDAS — HOLY MOLY TOBALABA</h1>
+    <div class="sub">${f} · Solicita: ${esc(usr?usr.nombre:'')}</div>
+    <table>
+      <thead><tr><th>Producto</th><th class="n">Cajas</th><th class="n">U × caja</th><th class="n">Unidades</th></tr></thead>
+      <tbody>${filas}</tbody>
+      <tfoot><tr><td>TOTAL</td><td class="n">${l.reduce((s,x)=>s+x.cajas,0)}</td><td></td>
+        <td class="n">${l.reduce((s,x)=>s+x.unidades,0)}</td></tr></tfoot>
+    </table>
+    <div class="pie">Generado por HMT OPS a partir del conteo de apertura${PEDSAL&&PEDSAL.fechaBase?' del '+PEDSAL.fechaBase:''}.</div>
+    </body></html>`);
+  w.document.close();
+  setTimeout(()=>{w.focus();w.print();},350);
+}
+
+async function registrarPedido(){
+  const l=lineasPedido();
+  if(!l.length){toast('No hay cantidades que registrar','err');return;}
+  const obs=prompt('¿A quién / cómo se envió el pedido? (mínimo 5 letras)','Enviado a Compras por WhatsApp');
+  if(obs===null)return;
+  if(String(obs).trim().length<5){toast('La observación es obligatoria','err');return;}
+  const b=document.getElementById('btn-pedsal');
+  b.disabled=true; document.getElementById('sending-pedsal').style.display='block';
+  try{
+    const r=await postOp({op:'registrarPedidoSalon',
+      items:l.map(x=>({producto:x.producto,cantidad:x.unidades})),
+      observacion:String(obs).trim()});
+    if(r.status!=='ok')throw new Error(r.msg||'No se pudo registrar');
+    toast('Pedido registrado — folio '+r.folio,'ok');
+    pedsalCargado=false; cargarPedidoSalon();   // recalcula ya con lo que va en camino
+  }catch(err){
+    toast(err.message||'No se pudo registrar','err');
+    b.disabled=false;
+  }
+  document.getElementById('sending-pedsal').style.display='none';
 }
 
 async function cargarPedidos(){
