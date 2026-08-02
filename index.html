@@ -203,6 +203,11 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
 .ped-cajas input{width:46px;height:32px;text-align:center;border-radius:8px;border:1.5px solid var(--border);
   font-size:15px;font-weight:800;font-family:inherit;color:var(--text)}
 .ped-cajas .cj{font-size:9.5px;color:var(--text3);width:26px;line-height:1.1}
+/* Quién trabajó hoy y cuántos registros hizo */
+.hist-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.hist-chip{background:#E6EFEA;color:var(--teal);border-radius:20px;padding:5px 11px;
+  font-size:11.5px;font-weight:600}
+.hist-chip b{font-weight:800}
 .ped-total{background:var(--teal);color:#fff;border-radius:14px;padding:13px 15px;margin-top:14px;
   font-size:14px;font-weight:700;text-align:center}
 .ped-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
@@ -437,10 +442,12 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
   <!-- HISTORIAL -->
   <div id="tab-historial" class="tab-body" style="display:none">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px">
-      <span style="font-size:13px;font-weight:700">Movimientos de hoy</span>
-      <span style="font-size:11px;color:var(--text3)" id="hist-cnt">0 registros</span>
+      <span style="font-size:13px;font-weight:700" id="hist-titulo">Movimientos de hoy</span>
+      <span style="font-size:11px;color:var(--text3)" id="hist-cnt">—</span>
     </div>
-    <div id="hist-list"></div>
+    <div id="hist-quien"></div>
+    <div id="hist-list"><div class="empty">Cargando...</div></div>
+    <div id="hist-local"></div>
   </div>
 
   <!-- STOCK -->
@@ -490,10 +497,18 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
     </div>
 
     <div id="ped-vista-barra" style="display:none">
-      <div class="banner banner-ok">
-        <i class="ti ti-cloud"></i> Conectado a Google Sheets en tiempo real
-      </div>
       <div id="ped-list"><div class="empty">Cargando pedidos...</div></div>
+      <div id="pedbar-acciones" style="display:none">
+        <div class="ped-total" id="pedbar-total"></div>
+        <div class="ped-btns">
+          <button class="btn-ped copiar" onclick="copiarPedidoTexto('barra')">
+            <i class="ti ti-brand-whatsapp"></i> Copiar para WhatsApp
+          </button>
+          <button class="btn-ped pdf" onclick="descargarPedidoPDF('barra')">
+            <i class="ti ti-file-type-pdf"></i> Descargar PDF
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -540,7 +555,9 @@ const TABS_POR_ROL={
   ],
   bartender:[
     {id:'registro',label:'Registro',icon:'ti-edit'},
-    {id:'reque',label:'Requerir',icon:'ti-send'}
+    {id:'reque',label:'Requerir',icon:'ti-send'},
+    {id:'pedidos',label:'Pedidos',icon:'ti-shopping-cart'},
+    {id:'historial',label:'Historial',icon:'ti-list'}
   ],
   garzon:[
     {id:'conteo',label:'Conteo',icon:'ti-clipboard-check'}
@@ -700,9 +717,12 @@ async function doLogin(){
   document.getElementById('lbl-fecha').textContent=new Date().toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
   buildNav();
   actualizarBadge();
+  aplicarPermisosUI();          // antes de mostrar nada: el rol manda desde el primer frame
   const tabs=TABS_POR_ROL[usr.rol]||TABS_POR_ROL.garzon;
   goTab(tabs[0].id);
-  if(usr.rol==='encargado'){initCats();renderProds();renderStk();renderHist();renderReqs();iniciarPollingBadge();}
+  // El historial ya no se dibuja acá: lo carga goTab desde el servidor cuando
+  // se abre la pestaña, así no se paga esa lectura si nadie la mira.
+  if(usr.rol==='encargado'){initCats();renderProds();renderStk();renderReqs();iniciarPollingBadge();}
   else if(usr.rol==='bartender'){initCats();renderProds();}   // recupera el registro de salidas
 }
 
@@ -747,7 +767,7 @@ function logout(){
   usr=null;pin='';rPin();
   movs=[];reqMios=[];REQS=[];PED=[];PERIODOS=[];periodoSel=-1;reqPend=0;
   salonCargado=false;pedCargado=false;consumoCargado=false;sel=null;selReq=null;
-  PEDSAL=null;pedsalCargado=false;
+  PEDSAL=null;pedsalCargado=false;HIST=null;histCargado=false;
   clearInterval(pollBadge);
   document.getElementById('sel-usr').value='';
   document.getElementById('lerr').textContent='';
@@ -775,6 +795,7 @@ function goTab(t){
     const nb=document.getElementById('navtab-'+id);
     if(nb)nb.classList.toggle('active',id===t);
   });
+  aplicarPermisosUI();   // el rol manda aunque los datos aún no hayan cargado
   if(t==='conteo'){
     // No re-renderizar si ya hay inputs: un conteo a medio llenar sobrevive
     // al paseo por otras pestañas.
@@ -783,6 +804,7 @@ function goTab(t){
   }
   if(t==='stock'&&!salonCargado)cargarSalon().then(()=>renderStk()); // visión total: barra + salón
   if(t==='consumo'){consumoCargado?renderConsumo():cargarConsumo();}
+  if(t==='historial'){histCargado?renderHist():cargarHistorial();}
   // La pestaña abre en Bebidas: es el pedido que se arma cada lunes. El de
   // barra queda a un toque, ya cargado desde el panel del login.
   if(t==='pedidos'){
@@ -1163,12 +1185,31 @@ function renderConteo(){
       </div>
     </div>`).join('');
   document.getElementById('cnt-footer').style.display='block';
-  document.getElementById('cnt-entrada-wrap').style.display=usr.rol==='encargado'?'block':'none';
+  aplicarPermisosUI();
   if(usr.rol==='encargado'){
     document.getElementById('ent-prod').innerHTML='<option value="">Selecciona producto...</option>'+
       SALON.maestro.map(m=>`<option value="${m.producto}">${m.producto} (${m.categoria})</option>`).join('');
   }
   updProgreso();
+}
+
+// Visibilidad por rol de lo que NO es una pestaña completa. Se llama al entrar,
+// al salir y al cambiar de pestaña — no solo al dibujar el conteo. Antes vivía
+// al final de renderConteo: si esa función cortaba antes (datos aún cargando),
+// el bloque de entrada quedaba como lo había dejado el usuario anterior, así
+// que en un celular compartido un garzón alcanzaba a VER la entrada de pedido.
+// El servidor siempre la rechazó (entradaSalon exige encargado), pero mostrarla
+// confunde y no debe pasar.
+function aplicarPermisosUI(){
+  const esEnc=!!usr&&usr.rol==='encargado';
+  const wrap=document.getElementById('cnt-entrada-wrap');
+  if(wrap)wrap.style.display=esEnc?'block':'none';
+  if(!esEnc){
+    const p=document.getElementById('ent-panel');
+    if(p)p.style.display='none';                       // que no quede desplegada
+    const b=document.getElementById('ent-toggle');
+    if(b)b.classList.remove('abierto');
+  }
 }
 
 function updTotal(i){
@@ -1240,6 +1281,9 @@ async function guardarConteo(){
 }
 
 async function guardarEntradaSalon(){
+  // Tercer candado, por si el bloque quedó visible por cualquier motivo. Los
+  // otros dos son la visibilidad por rol y el rechazo del servidor.
+  if(!usr||usr.rol!=='encargado'){toast('Solo los encargados registran entradas','err');return;}
   const prod=document.getElementById('ent-prod').value;
   const qty=parseInt(document.getElementById('qty-ent').value)||0;
   const obs=document.getElementById('nota-ent').value.trim();
@@ -1332,22 +1376,68 @@ function renderConsumo(){
 // ============================================================
 // HISTORIAL / STOCK / PEDIDOS / INFORME (base v1, + folio)
 // ============================================================
+// El historial se lee del servidor, no de la memoria del teléfono. Antes eran
+// solo los movimientos hechos en ESA sesión: se perdían al recargar y nadie veía
+// el trabajo de los demás. Ahora el encargado ve la bitácora completa del día
+// (barra, conteos, entradas y requerimientos, de todos los usuarios) y el
+// bartender ve lo suyo.
+let HIST=null, histCargado=false;
+
+async function cargarHistorial(){
+  const el=document.getElementById('hist-list');
+  el.innerHTML='<div class="empty"><i class="ti ti-loader spin"></i> Cargando la bitácora del día...</div>';
+  try{
+    const r=await postOp({op:'historialDia'});
+    if(r.status!=='ok')throw new Error(r.msg||'No se pudo cargar');
+    HIST=r; histCargado=true; renderHist();
+  }catch(err){
+    el.innerHTML='<div class="empty">No se pudo cargar.<br><button class="retry-btn" onclick="cargarHistorial()">↻ Reintentar</button></div>';
+  }
+}
+
 function renderHist(){
   const el=document.getElementById('hist-list');
-  document.getElementById('hist-cnt').textContent=movs.length+' registros';
-  if(!movs.length){el.innerHTML='<div class="empty">Sin movimientos registrados hoy</div>';return;}
-  el.innerHTML=movs.map(m=>`
-    <div class="hist-item">
-      <div class="hist-top">
-        <span class="hist-prod">${m.folio?'<span class="folio-tag">'+esc(m.folio)+'</span>':''}${esc(m.prod)}</span>
-        <span class="badge ${m.tipo}">${m.tipo} · ${m.qty} ${esc(m.unidad)}</span>
-      </div>
-      <div class="hist-meta">${m.ts} · Turno ${m.turno} · ${esc(m.user)}${m.nota?' · '+esc(m.nota):''}</div>
-      <div class="hist-sync ${m.sync?'sync-ok':'sync-err'}">
-        <i class="ti ${m.sync?'ti-cloud-check':'ti-cloud-off'}"></i>
-        ${m.sync?'Sincronizado con Google Sheets':'NO registrado — reintentar'}
-      </div>
-    </div>`).join('');
+  const elQ=document.getElementById('hist-quien');
+  document.getElementById('hist-titulo').textContent=
+    (HIST&&HIST.verTodos)?'Bitácora del día — todos':'Mis movimientos de hoy';
+
+  const ev=(HIST&&HIST.eventos)||[];
+  document.getElementById('hist-cnt').textContent=ev.length+' registro(s)';
+
+  // Quién trabajó hoy y cuánto: lo primero que se quiere saber al abrir esto.
+  if(HIST&&HIST.verTodos&&ev.length){
+    const gente=Object.keys(HIST.porQuien).sort((a,b)=>HIST.porQuien[b]-HIST.porQuien[a]);
+    elQ.innerHTML='<div class="hist-chips">'+gente.map(n=>
+      `<span class="hist-chip">${esc(n)} <b>${HIST.porQuien[n]}</b></span>`).join('')+'</div>';
+  }else elQ.innerHTML='';
+
+  if(!ev.length){
+    el.innerHTML='<div class="empty">Sin movimientos registrados hoy</div>';
+  }else{
+    el.innerHTML=ev.map(e=>{
+      const t=String(e.tipo||'').split(' ')[0];
+      const cant=e.cantidad!==''&&e.cantidad!=null?` · ${e.cantidad} ${esc(e.unidad||'')}`:'';
+      return `<div class="hist-item">
+        <div class="hist-top">
+          <span class="hist-prod">${e.folio?'<span class="folio-tag">'+esc(e.folio)+'</span>':''}${esc(e.producto)}</span>
+          <span class="badge ${t}">${esc(e.tipo)}${cant}</span>
+        </div>
+        <div class="hist-meta">${esc(e.hora)} · ${esc(e.modulo)} · <b>${esc(e.quien)}</b>${e.obs?' · '+esc(e.obs):''}</div>
+      </div>`;}).join('');
+  }
+
+  // Lo registrado en ESTA sesión se muestra aparte: es la única forma de ver si
+  // algo quedó sin sincronizar y hay que reintentarlo.
+  const elL=document.getElementById('hist-local');
+  const fallidos=movs.filter(m=>!m.sync);
+  elL.innerHTML=fallidos.length
+    ? `<div class="sec-lbl" style="margin-top:18px">⚠️ Sin registrar en el Sheet</div>`+
+      fallidos.map(m=>`<div class="hist-item">
+        <div class="hist-top"><span class="hist-prod">${esc(m.prod)}</span>
+        <span class="badge ${m.tipo}">${m.tipo} · ${m.qty} ${esc(m.unidad)}</span></div>
+        <div class="hist-sync sync-err"><i class="ti ti-cloud-off"></i> NO registrado — reintentar</div>
+      </div>`).join('')
+    : '';
 }
 
 function renderStk(){
@@ -1495,35 +1585,59 @@ function ajCajas(i,d){
   totalPedido();
 }
 
-function lineasPedido(){
+// Las dos vistas comparten copiar/PDF. Se normaliza cada línea a una forma
+// común porque los pedidos son distintos: bebidas se pide por CAJA (factor fijo
+// por producto), y barra en la unidad propia de cada ítem (botella, kg, litro).
+function lineasPedido(vista){
+  if(vista==='barra'){
+    if(!PED)return [];
+    return PED.map((p,i)=>{
+      const n=Math.max(0,parseInt((document.getElementById('pb-'+i)||{}).value)||0);
+      return {producto:p.nombre,cant:n,unidadTxt:p.unidad||'und',extra:'',unidades:n};
+    }).filter(l=>l.cant>0);
+  }
   if(!PEDSAL)return [];
   return PEDSAL.items.map((x,i)=>{
     const c=Math.max(0,parseInt((document.getElementById('pc-'+i)||{}).value)||0);
-    return {producto:x.producto,cajas:c,unidPorCaja:x.unidPorCaja,unidades:c*x.unidPorCaja};
-  }).filter(l=>l.cajas>0);
+    return {producto:x.producto,cant:c,unidadTxt:'caja(s)',
+            extra:'  ('+(c*x.unidPorCaja)+' u)',unidPorCaja:x.unidPorCaja,unidades:c*x.unidPorCaja};
+  }).filter(l=>l.cant>0);
 }
 
-function totalPedido(){
-  const l=lineasPedido();
-  const cajas=l.reduce((s,x)=>s+x.cajas,0), und=l.reduce((s,x)=>s+x.unidades,0);
+function totalPedido(vista){
+  vista=vista||'bebidas';
+  const l=lineasPedido(vista);
+  if(vista==='barra'){
+    const el=document.getElementById('pedbar-total');
+    if(el)el.textContent=l.length?`${l.length} producto(s) a pedir`:'Sin cantidades — ajusta arriba';
+    const acc=document.getElementById('pedbar-acciones');
+    if(acc)acc.style.display=PED&&PED.length?'block':'none';
+    return;
+  }
+  const cajas=l.reduce((s,x)=>s+x.cant,0), und=l.reduce((s,x)=>s+x.unidades,0);
   document.getElementById('pedsal-total').textContent=
     cajas?`${cajas} caja(s) · ${und} unidades · ${l.length} producto(s)`:'Sin cantidades — ajusta arriba';
   const b=document.getElementById('btn-pedsal');
   if(b)b.disabled=!cajas;
 }
 
-function textoPedido(){
-  const l=lineasPedido();
+function textoPedido(vista){
+  const esBeb=vista!=='barra';
+  const l=lineasPedido(vista);
   const f=new Date().toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'});
-  let t=`*PEDIDO BEBIDAS — HOLY MOLY TOBALABA*\n${f}\n\n`;
-  l.forEach(x=>{t+=`• ${x.producto}: *${x.cajas}* caja(s)  (${x.unidades} u)\n`;});
-  t+=`\n*TOTAL: ${l.reduce((s,x)=>s+x.cajas,0)} cajas*\nSolicita: ${usr?usr.nombre:''}`;
+  let t=`*PEDIDO ${esBeb?'BEBIDAS':'BARRA'} — HOLY MOLY TOBALABA*\n${f}\n\n`;
+  l.forEach(x=>{t+=`• ${x.producto}: *${x.cant}* ${x.unidadTxt}${x.extra}\n`;});
+  t+=esBeb
+    ? `\n*TOTAL: ${l.reduce((s,x)=>s+x.cant,0)} cajas*`
+    : `\n*TOTAL: ${l.length} producto(s)*`;
+  t+=`\nSolicita: ${usr?usr.nombre:''}`;
   return t;
 }
 
-async function copiarPedidoTexto(){
-  const t=textoPedido();
-  if(!lineasPedido().length){toast('No hay cantidades que copiar','err');return;}
+async function copiarPedidoTexto(vista){
+  vista=vista||'bebidas';
+  const t=textoPedido(vista);
+  if(!lineasPedido(vista).length){toast('No hay cantidades que copiar','err');return;}
   try{
     await navigator.clipboard.writeText(t);
     toast('Copiado — pégalo en WhatsApp','ok');
@@ -1538,15 +1652,29 @@ async function copiarPedidoTexto(){
   }
 }
 
-function descargarPedidoPDF(){
-  const l=lineasPedido();
+function descargarPedidoPDF(vista){
+  vista=vista||'bebidas';
+  const esBeb=vista!=='barra';
+  const l=lineasPedido(vista);
   if(!l.length){toast('No hay cantidades que imprimir','err');return;}
   const f=new Date().toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-  const filas=l.map(x=>`<tr><td>${esc(x.producto)}</td><td class="n">${x.cajas}</td>
-      <td class="n">${x.unidPorCaja}</td><td class="n">${x.unidades}</td></tr>`).join('');
+  // Barra no tiene caja: cada producto va en su propia unidad, así que la
+  // tabla cambia de columnas según el pedido.
+  const encabezados=esBeb
+    ? '<th>Producto</th><th class="n">Cajas</th><th class="n">U × caja</th><th class="n">Unidades</th>'
+    : '<th>Producto</th><th class="n">Cantidad</th><th>Unidad</th>';
+  const filas=l.map(x=>esBeb
+    ? `<tr><td>${esc(x.producto)}</td><td class="n">${x.cant}</td>
+       <td class="n">${x.unidPorCaja}</td><td class="n">${x.unidades}</td></tr>`
+    : `<tr><td>${esc(x.producto)}</td><td class="n">${x.cant}</td><td>${esc(x.unidadTxt)}</td></tr>`
+  ).join('');
+  const pie=esBeb
+    ? `<tfoot><tr><td>TOTAL</td><td class="n">${l.reduce((s,x)=>s+x.cant,0)}</td><td></td>
+        <td class="n">${l.reduce((s,x)=>s+x.unidades,0)}</td></tr></tfoot>`
+    : `<tfoot><tr><td>TOTAL</td><td class="n">${l.length}</td><td>producto(s)</td></tr></tfoot>`;
   const w=window.open('','_blank');
   if(!w){toast('Permite las ventanas emergentes para generar el PDF','err');return;}
-  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Pedido bebidas ${f}</title>
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Pedido ${esBeb?'bebidas':'barra'} ${f}</title>
     <style>
       body{font-family:Arial,Helvetica,sans-serif;color:#111;padding:26px;max-width:720px;margin:auto}
       h1{font-size:19px;margin:0;letter-spacing:.5px}
@@ -1559,15 +1687,14 @@ function descargarPedidoPDF(){
       tfoot td{font-weight:bold;border-top:2px solid #111;border-bottom:none;font-size:14px}
       .pie{margin-top:22px;font-size:11px;color:#666;border-top:1px solid #ddd;padding-top:10px}
     </style></head><body>
-    <h1>PEDIDO DE BEBIDAS — HOLY MOLY TOBALABA</h1>
+    <h1>PEDIDO DE ${esBeb?'BEBIDAS':'BARRA'} — HOLY MOLY TOBALABA</h1>
     <div class="sub">${f} · Solicita: ${esc(usr?usr.nombre:'')}</div>
     <table>
-      <thead><tr><th>Producto</th><th class="n">Cajas</th><th class="n">U × caja</th><th class="n">Unidades</th></tr></thead>
+      <thead><tr>${encabezados}</tr></thead>
       <tbody>${filas}</tbody>
-      <tfoot><tr><td>TOTAL</td><td class="n">${l.reduce((s,x)=>s+x.cajas,0)}</td><td></td>
-        <td class="n">${l.reduce((s,x)=>s+x.unidades,0)}</td></tr></tfoot>
+      ${pie}
     </table>
-    <div class="pie">Generado por HMT OPS a partir del conteo de apertura${PEDSAL&&PEDSAL.fechaBase?' del '+PEDSAL.fechaBase:''}.</div>
+    <div class="pie">Generado por HMT OPS${esBeb&&PEDSAL&&PEDSAL.fechaBase?' a partir del conteo de apertura del '+PEDSAL.fechaBase:''}.</div>
     </body></html>`);
   w.document.close();
   setTimeout(()=>{w.focus();w.print();},350);
@@ -1609,28 +1736,58 @@ async function cargarPedidos(){
   }
 }
 
+// Misma mecánica que el de bebidas: el Sheet propone, el encargado ajusta y
+// se lleva el pedido por WhatsApp o PDF. La diferencia es que barra no se pide
+// por caja — cada producto va en su unidad (botella, kg, litro).
+function ajBarra(i,d){
+  const inp=document.getElementById('pb-'+i);
+  inp.value=Math.max(0,(parseInt(inp.value)||0)+d);
+  totalPedido('barra');
+}
+
 function renderPedidos(){
   const el=document.getElementById('ped-list');
-  const conSugerido=PED.filter(p=>Number(p.pedidoSugerido)>0);
-  if(!PED.length){el.innerHTML='<div class="empty">Sin datos en la hoja PEDIDOS</div>';return;}
-  const cats=[...new Set(PED.map(p=>p.categoria))];
-  let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px">
-    <span style="font-size:13px;font-weight:700">Pedido sugerido</span>
-    <span style="font-size:11px;color:var(--text3)">${conSugerido.length} producto(s) bajo mínimo</span>
+  if(!PED.length){
+    el.innerHTML='<div class="empty">Sin datos en la hoja PEDIDOS</div>';
+    document.getElementById('pedbar-acciones').style.display='none';
+    return;
+  }
+  // Primero lo que hay que pedir; el resto queda abajo por si se quiere sumar algo.
+  const idx=PED.map((p,i)=>i);
+  const pedir=idx.filter(i=>Number(PED[i].pedidoSugerido)>0);
+  const resto=idx.filter(i=>!(Number(PED[i].pedidoSugerido)>0));
+  let html=`<div class="banner banner-ok" style="margin-bottom:10px">
+    <i class="ti ti-shopping-cart"></i> ${pedir.length} producto(s) bajo el mínimo
   </div>`;
-  cats.forEach(c=>{
-    const prods=PED.filter(p=>p.categoria===c);
-    html+=`<div class="stk-cat-lbl">${c}</div>`;
-    prods.forEach(p=>{
-      const sugerido=Number(p.pedidoSugerido)||0;
-      const bajoMinimo=sugerido>0;
-      html+=`<div class="stk-row" style="${bajoMinimo?'background:#FAECE7':''}">
-        <span class="stk-nombre">${p.nombre}<br><span style="font-size:10px;color:var(--text3)">Actual: ${p.stockActual} ${p.unidad} · Mín: ${p.minimo} · Máx: ${p.maximo}</span></span>
-        <span class="stk-qty ${bajoMinimo?'s-zero':'s-ok'}">${bajoMinimo?'Pedir '+sugerido:'OK'} ${p.unidad}</span>
-      </div>`;
-    });
-  });
+
+  const fila=(i)=>{
+    const p=PED[i];
+    const sug=Number(p.pedidoSugerido)||0;
+    const sinStock=Number(p.stockActual)===0;
+    const clase=sinStock?' urge':(sug>0?' pronto':'');
+    const badge=sinStock?'<span class="ped-badge b-quiebre">SIN STOCK</span>'
+              :(sug>0?'<span class="ped-badge b-bajo">BAJO MÍN</span>':'');
+    return `<div class="ped-row${clase}">
+      <div class="ped-info">
+        <div class="ped-nom">${badge}${esc(p.nombre)}</div>
+        <div class="ped-sub">Quedan ${p.stockActual} ${esc(p.unidad||'')} · mín ${p.minimo} · máx ${p.maximo}</div>
+      </div>
+      <div class="ped-cajas">
+        <button onclick="ajBarra(${i},-1)">−</button>
+        <input type="number" inputmode="numeric" min="0" id="pb-${i}" value="${sug}" oninput="totalPedido('barra')">
+        <button onclick="ajBarra(${i},1)">+</button>
+        <span class="cj">${esc(p.unidad||'und')}</span>
+      </div>
+    </div>`;
+  };
+
+  html+=pedir.map(fila).join('');
+  if(resto.length){
+    html+=`<div class="stk-cat-lbl" style="margin-top:16px">Resto del catálogo (con stock)</div>`;
+    html+=resto.map(fila).join('');
+  }
   el.innerHTML=html;
+  totalPedido('barra');
 }
 
 async function abrirInforme() {
