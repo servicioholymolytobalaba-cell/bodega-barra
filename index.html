@@ -208,6 +208,55 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
 .hist-chip{background:#E6EFEA;color:var(--teal);border-radius:20px;padding:5px 11px;
   font-size:11.5px;font-weight:600}
 .hist-chip b{font-weight:800}
+/* ---- DASHBOARD ---- */
+.dash-filtros{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:11px;margin-bottom:12px}
+.dash-seg{display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;margin-bottom:8px}
+.dash-seg button{height:34px;border-radius:9px;border:1.5px solid var(--border);background:#fff;
+  font-size:12px;font-weight:700;color:var(--text2);font-family:inherit;cursor:pointer}
+.dash-seg button.activa{background:var(--teal);border-color:var(--teal);color:#fff}
+.dash-filtros select,.dash-filtros input{width:100%;height:38px;border-radius:9px;border:1.5px solid var(--border);
+  background:#fff;color:var(--text);padding:0 10px;font-size:13px;font-family:inherit;appearance:none;-webkit-appearance:none}
+.dash-f-row{margin-bottom:7px}
+.dash-f-row.dos{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.dash-chips{display:flex;flex-wrap:wrap;gap:5px}
+.dash-chip{background:var(--gray-c);color:var(--text2);border:none;border-radius:16px;padding:6px 11px;
+  font-size:11.5px;font-weight:700;font-family:inherit;cursor:pointer}
+.dash-chip.activa{background:var(--teal);color:#fff}
+.dash-sec{font-size:12.5px;font-weight:800;color:var(--teal);text-transform:uppercase;letter-spacing:.05em;
+  margin:20px 0 3px}
+.dash-sec-sub{font-size:10.5px;color:var(--text3);margin-bottom:9px;line-height:1.35}
+.dash-kpi{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.kpi-card{background:#fff;border:1.5px solid var(--border);border-radius:13px;padding:11px 12px}
+.kpi-lbl{font-size:9.5px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+  line-height:1.25;min-height:24px}
+.kpi-val{font-size:24px;font-weight:800;line-height:1.1;margin-top:2px}
+.kpi-delta{font-size:10.5px;font-weight:700;margin-top:3px}
+.kpi-delta.sube{color:var(--coral-m)}
+.kpi-delta.baja{color:var(--teal-m)}
+.kpi-delta.igual{color:var(--text3)}
+/* Insights: la barra hace comparable de un vistazo lo que el texto explica */
+.ins{background:#fff;border:1.5px solid var(--border);border-radius:13px;padding:10px 12px;margin-bottom:7px}
+.ins-txt{font-size:12.5px;line-height:1.45;color:var(--text)}
+.ins-txt b{font-weight:800}
+.ins-bar{height:6px;border-radius:3px;background:var(--gray-c);margin-top:7px;overflow:hidden}
+.ins-bar span{display:block;height:100%;border-radius:3px}
+.ins-bar span.sube{background:var(--coral-m)}
+.ins-bar span.baja{background:var(--teal-m)}
+.ins-meta{font-size:9.5px;color:var(--text3);margin-top:5px;text-transform:uppercase;letter-spacing:.04em;font-weight:700}
+/* Tablas comparativas: 4 columnas caben en 375px porque el nombre se trunca */
+.dtab{width:100%;border-collapse:collapse;background:#fff;border:1.5px solid var(--border);border-radius:13px;
+  overflow:hidden;font-size:11.5px}
+.dtab th{background:var(--gray-c);color:var(--text2);font-size:9.5px;font-weight:800;text-transform:uppercase;
+  letter-spacing:.04em;padding:7px 6px;text-align:right}
+.dtab th:first-child{text-align:left}
+.dtab td{padding:7px 6px;text-align:right;border-top:1px solid var(--border);font-weight:700}
+.dtab td:first-child{text-align:left;font-weight:600;max-width:118px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dtab tr.catrow td{background:var(--teal-c);color:var(--teal);font-size:9.5px;font-weight:800;
+  text-transform:uppercase;letter-spacing:.05em}
+.dtab td.mix{color:var(--text3);font-weight:600}
+.dtab td.neg{color:var(--red-t)}
+.dash-nota{background:var(--amber-c);border:1px solid #E8CF9E;border-radius:11px;padding:9px 11px;
+  font-size:11px;color:#6B3D06;line-height:1.4;margin-bottom:12px}
 .ped-total{background:var(--teal);color:#fff;border-radius:14px;padding:13px 15px;margin-top:14px;
   font-size:14px;font-weight:700;text-align:center}
 .ped-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
@@ -439,6 +488,32 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
     <div id="consumo-body"><div class="empty">Cargando consumo...</div></div>
   </div>
 
+  <!-- DASHBOARD -->
+  <!-- Los filtros van en el HTML y no se redibujan: si se regeneraran en cada
+       render, el buscador perdería el foco a la primera letra escrita. -->
+  <div id="tab-dash" class="tab-body" style="display:none">
+    <div class="dash-filtros">
+      <div class="dash-seg" id="dash-mod">
+        <button class="activa" id="dm-todo" onclick="setDashMod('todo')">Todo</button>
+        <button id="dm-Barra" onclick="setDashMod('Barra')">🍾 Barra</button>
+        <button id="dm-Bebidas" onclick="setDashMod('Bebidas')">🥤 Bebidas</button>
+      </div>
+      <div class="dash-f-row">
+        <select id="dash-cat" onchange="renderDash()"><option value="">Todas las categorías</option></select>
+      </div>
+      <div class="dash-f-row">
+        <input id="dash-prod" type="search" placeholder="Buscar producto..." oninput="renderDash()" autocomplete="off">
+      </div>
+      <div class="dash-chips" id="dash-rangos"></div>
+      <div style="height:7px"></div>
+      <div class="dash-f-row dos" style="margin-bottom:0">
+        <input type="date" id="dash-d1" onchange="rangoManual()">
+        <input type="date" id="dash-d2" onchange="rangoManual()">
+      </div>
+    </div>
+    <div id="dash-body"><div class="empty">Cargando...</div></div>
+  </div>
+
   <!-- HISTORIAL -->
   <div id="tab-historial" class="tab-body" style="display:none">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:11px">
@@ -544,7 +619,13 @@ const OBS_MIN=5;
 
 // Definición de pestañas por rol
 const TABS_POR_ROL={
+  // Dashboard va PRIMERO (decisión de Angela, 02/08): es la pantalla de
+  // gestión y estaba perdida en el puesto 5 de 8. No encarece el login: goTab
+  // no espera a cargarDashboard(), así que la app queda usable de inmediato y
+  // el dashboard se rellena solo. Ese segundo viaje NO paga otro arranque en
+  // frío — la instancia ya quedó caliente con el login.
   encargado:[
+    {id:'dash',label:'Dashboard',icon:'ti-chart-histogram'},
     {id:'registro',label:'Registro',icon:'ti-edit'},
     {id:'reque',label:'Requerim.',icon:'ti-inbox',badge:true},
     {id:'conteo',label:'Conteo',icon:'ti-clipboard-check'},
@@ -768,6 +849,7 @@ function logout(){
   movs=[];reqMios=[];REQS=[];PED=[];PERIODOS=[];periodoSel=-1;reqPend=0;
   salonCargado=false;pedCargado=false;consumoCargado=false;sel=null;selReq=null;
   PEDSAL=null;pedsalCargado=false;HIST=null;histCargado=false;
+  DASH=null;dashCargado=false;dashMod='todo';dashRango={d1:null,d2:null,etq:'28d'};
   clearInterval(pollBadge);
   document.getElementById('sel-usr').value='';
   document.getElementById('lerr').textContent='';
@@ -789,7 +871,7 @@ function buildNav(){
 
 let salonCargado=false, pedCargado=false, consumoCargado=false;
 function goTab(t){
-  ['registro','reque','conteo','consumo','historial','stock','pedidos'].forEach(id=>{
+  ['registro','reque','conteo','consumo','dash','historial','stock','pedidos'].forEach(id=>{
     const el=document.getElementById('tab-'+id);
     if(el)el.style.display=id===t?'block':'none';
     const nb=document.getElementById('navtab-'+id);
@@ -805,6 +887,7 @@ function goTab(t){
   if(t==='stock'&&!salonCargado)cargarSalon().then(()=>renderStk()); // visión total: barra + salón
   if(t==='consumo'){consumoCargado?renderConsumo():cargarConsumo();}
   if(t==='historial'){histCargado?renderHist():cargarHistorial();}
+  if(t==='dash'){dashCargado?renderDash():cargarDashboard();}
   // La pestaña abre en Bebidas: es el pedido que se arma cada lunes. El de
   // barra queda a un toque, ya cargado desde el panel del login.
   if(t==='pedidos'){
@@ -1371,6 +1454,411 @@ function renderConsumo(){
       </div>`).join('');
   }
   body.innerHTML=html;
+}
+
+// ============================================================
+// DASHBOARD (encargado)
+// ============================================================
+// El servidor manda la serie diaria cruda una sola vez; todo el análisis se
+// hace acá. Así cambiar un filtro es instantáneo en lugar de un viaje con
+// arranque en frío de Apps Script.
+//
+// EJE TEMPORAL: fecha calendario real. Las semanas son lunes-domingo derivadas
+// de la fecha, NO las etiquetas S27/S28 del Sheet de barra (esas son el período
+// contable del inventario y siguen intactas). Los meses son meses calendario.
+//
+// LO QUE NO SE SUMA: barra mezcla botellas, kilos y litros. Sumar cantidades de
+// productos distintos daría un número sin significado, así que a nivel de
+// catálogo se cuentan MOVIMIENTOS y las cantidades solo se suman donde la
+// unidad es una sola: dentro de un producto, o dentro de una categoría cuando
+// todos sus productos comparten unidad (si no, se marca "mixto").
+let DASH=null, dashCargado=false;
+let dashMod='todo';
+let dashRango={d1:null,d2:null,etq:'28d'};
+
+const D_MS=86400000;
+function isoDe(d){const z=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+z(d.getMonth()+1)+'-'+z(d.getDate());}
+// Nunca new Date('yyyy-MM-dd'): eso es medianoche UTC y en Chile cae el día
+// anterior a las 20:00. Se construye por partes, igual que en el backend.
+function fechaLocal(iso){const p=String(iso).split('-').map(Number);return new Date(p[0],p[1]-1,p[2]);}
+function sumaDias(iso,n){const d=fechaLocal(iso);d.setDate(d.getDate()+n);return isoDe(d);}
+function lunesDe(iso){const d=fechaLocal(iso);d.setDate(d.getDate()-((d.getDay()+6)%7));return isoDe(d);}
+function primeroMes(iso){const d=fechaLocal(iso);return isoDe(new Date(d.getFullYear(),d.getMonth(),1));}
+function mesAnterior(iso){const d=fechaLocal(iso);return isoDe(new Date(d.getFullYear(),d.getMonth()-1,1));}
+function finMes(iso){const d=fechaLocal(iso);return isoDe(new Date(d.getFullYear(),d.getMonth()+1,0));}
+function dLbl(iso){const d=fechaLocal(iso);return d.toLocaleDateString('es-CL',{day:'numeric',month:'short'});}
+function mLbl(iso){const d=fechaLocal(iso);return d.toLocaleDateString('es-CL',{month:'long'});}
+// Redondeo a 1 decimal solo si hace falta: los kilos vienen con decimales, las
+// botellas no, y "6,0 botella" se lee peor que "6".
+function nf(v){const n=Number(v)||0;return Math.abs(n%1)<0.05?String(Math.round(n)):n.toFixed(1).replace('.',',');}
+
+async function cargarDashboard(){
+  const el=document.getElementById('dash-body');
+  el.innerHTML='<div class="empty"><i class="ti ti-loader spin"></i> Leyendo la operación del último mes...</div>';
+  try{
+    const r=await postOp({op:'dashboard'});
+    if(r.status!=='ok')throw new Error(r.msg||'No se pudo cargar');
+    DASH=r; dashCargado=true;
+    poblarCatsDash();
+    setRango(dashRango.etq);   // dispara renderDash
+  }catch(err){
+    // Al ser la primera pestaña, este error es lo primero que se ve al entrar.
+    // Tiene que dejar claro que solo falló ESTA pantalla: registrar, contar y
+    // pedir siguen funcionando, y nadie debe quedarse sin trabajar por esto.
+    el.innerHTML='<div class="empty">No se pudo cargar el dashboard.<br>'+
+      '<span style="font-size:11.5px">El resto de la app funciona normal — usa las pestañas de arriba.</span>'+
+      '<br><button class="retry-btn" onclick="cargarDashboard()">↻ Reintentar</button></div>';
+  }
+}
+
+function poblarCatsDash(){
+  const sel=document.getElementById('dash-cat');
+  const cats=[...new Set(DASH.productos
+    .filter(p=>dashMod==='todo'||p[2]===dashMod)
+    .map(p=>p[1]))].sort((a,b)=>a.localeCompare(b));
+  const prev=sel.value;
+  sel.innerHTML='<option value="">Todas las categorías</option>'+
+    cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  if(cats.indexOf(prev)>-1)sel.value=prev;   // el filtro sobrevive al cambio de módulo
+}
+
+function setDashMod(m){
+  dashMod=m;
+  ['todo','Barra','Bebidas'].forEach(k=>
+    document.getElementById('dm-'+k).classList.toggle('activa',k===m));
+  poblarCatsDash();
+  renderDash();
+}
+
+const RANGOS=[
+  {id:'7d',  lbl:'7 días'},
+  {id:'14d', lbl:'14 días'},
+  {id:'28d', lbl:'28 días'},
+  {id:'mes', lbl:'Mes actual'},
+  {id:'mesant',lbl:'Mes anterior'}
+];
+function setRango(id){
+  const hoy=DASH.hoy;
+  dashRango.etq=id;
+  if(id==='mes'){dashRango.d1=primeroMes(hoy);dashRango.d2=hoy;}
+  else if(id==='mesant'){const m=mesAnterior(hoy);dashRango.d1=m;dashRango.d2=finMes(m);}
+  else{const n=parseInt(id,10);dashRango.d1=sumaDias(hoy,-(n-1));dashRango.d2=hoy;}
+  document.getElementById('dash-d1').value=dashRango.d1;
+  document.getElementById('dash-d2').value=dashRango.d2;
+  renderDash();
+}
+function rangoManual(){
+  const a=document.getElementById('dash-d1').value, b=document.getElementById('dash-d2').value;
+  if(!a||!b)return;
+  // Fechas al revés: se ordenan en vez de devolver un rango vacío sin explicación.
+  dashRango.d1=a<b?a:b; dashRango.d2=a<b?b:a;
+  dashRango.etq='libre';
+  document.getElementById('dash-d1').value=dashRango.d1;
+  document.getElementById('dash-d2').value=dashRango.d2;
+  renderDash();
+}
+
+// ---- filtrado y agregación ----
+function filasDash(d1,d2){
+  const cat=document.getElementById('dash-cat').value;
+  const q=document.getElementById('dash-prod').value.trim().toLowerCase();
+  return DASH.filas.filter(f=>{
+    if(d1&&f[0]<d1)return false;          // 'yyyy-MM-dd' compara bien como texto
+    if(d2&&f[0]>d2)return false;
+    const p=DASH.productos[f[1]];
+    if(dashMod!=='todo'&&p[2]!==dashMod)return false;
+    if(cat&&p[1]!==cat)return false;
+    if(q&&p[0].toLowerCase().indexOf(q)<0)return false;
+    return true;
+  });
+}
+// filas -> {porProd, tot}. La clave incluye el módulo: un mismo nombre podría
+// existir en barra y en bebidas y no deben fundirse.
+function agrupar(filas){
+  const porProd={};
+  const tot={nSal:0,nEnt:0,und:0};
+  filas.forEach(f=>{
+    const p=DASH.productos[f[1]];
+    const k=p[2]+'|'+p[0];
+    if(!porProd[k])porProd[k]={nombre:p[0],cat:p[1],mod:p[2],uni:p[3],sal:0,ent:0,mer:0,nSal:0,nEnt:0};
+    const a=porProd[k];
+    a.sal+=f[2];a.ent+=f[3];a.mer+=f[4];a.nSal+=f[6];a.nEnt+=f[7];
+    tot.nSal+=f[6];tot.nEnt+=f[7];
+    if(p[2]==='Bebidas')tot.und+=f[2];
+  });
+  return {porProd:porProd,tot:tot};
+}
+function rango(d1,d2){return agrupar(filasDash(d1,d2));}
+
+function deltaHtml(cur,prev,sufijo){
+  if(prev===0&&cur===0)return '<div class="kpi-delta igual">sin datos previos</div>';
+  if(prev===0)return '<div class="kpi-delta sube">nuevo — sin base anterior</div>';
+  const d=cur-prev;
+  if(d===0)return '<div class="kpi-delta igual">igual que '+sufijo+'</div>';
+  // Sin porcentaje cuando la base es negativa o el valor actual lo es. Los
+  // consumos negativos NO se recortan a cero (decisión de §10.4), así que un
+  // total semanal negativo es posible tras un error de conteo grande — y
+  // "de −80 a 45" daría "▲156%", un número creíble y sin significado. Se
+  // muestra el cambio absoluto y se dice por qué.
+  if(prev<0||cur<0)return '<div class="kpi-delta '+(d>0?'sube':'baja')+'">'+(d>0?'▲':'▼')+' '+
+    nf(Math.abs(d))+' vs '+sufijo+' · sin % (hay conteo negativo)</div>';
+  const pct=Math.round(d/prev*100);
+  return '<div class="kpi-delta '+(d>0?'sube':'baja')+'">'+(d>0?'▲':'▼')+' '+
+    Math.abs(pct)+'% vs '+sufijo+'</div>';
+}
+
+// ---- INSIGHTS EN TEXTO (cero costo de API) ----
+// La detección, el orden y la barra son matemática pura. La redacción son
+// plantillas con variantes según la magnitud y la tendencia, aisladas en esta
+// función: si algún día se quiere prosa generada, se cambia solo acá.
+//
+// Orden por RELEVANCIA, no por delta bruto: barra mezcla unidades, así que un
+// delta de 40 kg y uno de 40 botellas no son comparables. El cambio porcentual
+// sí es adimensional, pero solo con el % un producto que pasa de 1 a 2 (+100%)
+// le ganaría a uno que pasa de 40 a 60. Se pondera el % por el logaritmo del
+// volumen: el tamaño importa, pero sin que el producto más vendido cope la
+// lista siempre.
+function armarInsights(cur,prev,prev2){
+  const out=[];
+  Object.keys(cur).forEach(k=>{
+    const c=cur[k], p=prev[k], p2=prev2[k];
+    const vc=c.sal, vp=p?p.sal:0, vp2=p2?p2.sal:null;
+    const d=vc-vp;
+    if(Math.abs(d)<0.05)return;                       // "cambios distintos de cero"
+    // Base sucia = alguno de los dos valores es negativo, o sea hubo un error
+    // de conteo. NO es lo mismo que vp===0 (producto nuevo, un dato legítimo):
+    // sobre base negativa no existe porcentaje, y darle relevancia 100 como si
+    // fuera un producto nuevo lo mandaba al tope de la lista con el texto
+    // "subió un 0%" — la frase más visible de la pantalla era la más vacía.
+    const sucio=vp<0||vc<0;
+    const pct=(vp>0&&!sucio)?(d/vp*100):null;
+    // Relevancia baja pero no nula: el aviso ámbar de arriba ya cuenta los
+    // conteos negativos, así que acá no necesita gritar, solo estar.
+    const rel=pct!==null?Math.abs(pct):(sucio?25:100);
+    const peso=Math.max(Math.abs(vc),Math.abs(vp));
+    out.push({nombre:c.nombre,uni:c.uni,mod:c.mod,cur:vc,prev:vp,prev2:vp2,d:d,pct:pct,sucio:sucio,
+      score:rel*Math.log10(1+peso)});
+  });
+  // También los que desaparecieron: están en la semana anterior y no en esta.
+  Object.keys(prev).forEach(k=>{
+    if(cur[k])return;
+    const p=prev[k];
+    if(Math.abs(p.sal)<0.05)return;
+    const suc=p.sal<0;   // se "detuvo" pero venía de un conteo negativo: base sucia igual
+    out.push({nombre:p.nombre,uni:p.uni,mod:p.mod,cur:0,prev:p.sal,prev2:prev2[k]?prev2[k].sal:null,
+      d:-p.sal,pct:suc?null:-100,sucio:suc,score:(suc?25:100)*Math.log10(1+Math.abs(p.sal))});
+  });
+  out.sort((a,b)=>b.score-a.score);
+  return out;
+}
+function fraseInsight(i){
+  const n='<b>'+esc(i.nombre)+'</b>', u=i.uni?' '+esc(i.uni):'';
+  // El caso sucio va PRIMERO: si no, "se detuvo: −80 und la semana pasada"
+  // presentaría un error de conteo como si fuera una lectura normal.
+  if(i.sucio){
+    if(i.cur<0)
+      return n+' marca un consumo <b>negativo</b> esta semana ('+nf(i.cur)+u+
+        '): sobra stock contra lo esperado, o sea error de conteo o una entrada sin registrar. Revisar antes de leer la cifra.';
+    return n+' venía de un conteo negativo la semana pasada ('+nf(i.prev)+u+
+      ') y esta semana marca '+nf(i.cur)+u+'. No se puede calcular variación sobre esa base.';
+  }
+  if(i.prev===0)
+    return n+' apareció esta semana con '+nf(i.cur)+u+'. La semana anterior no tuvo movimiento.';
+  if(i.cur===0)
+    return n+' se detuvo: '+nf(i.prev)+u+' la semana pasada, nada esta semana.';
+  const sube=i.d>0, pct=Math.abs(Math.round(i.pct));
+  const verbo=pct>=60?(sube?'se disparó':'se derrumbó')
+             :pct>=25?(sube?'subió fuerte':'cayó fuerte')
+             :(sube?'subió':'bajó');
+  let t=n+' '+verbo+' un '+pct+'%: de '+nf(i.prev)+' a '+nf(i.cur)+u+'.';
+  // Tercera semana como contexto: distingue una tendencia de un rebote.
+  if(i.prev2!=null&&Math.abs(i.prev2)>0.05){
+    const dAnt=i.prev-i.prev2;
+    if(Math.abs(dAnt)>0.05&&(dAnt>0)===sube)
+      t+=' Segunda semana consecutiva '+(sube?'al alza':'a la baja')+'.';
+    else if(Math.abs(dAnt)>0.05)
+      t+=' Corta la '+(sube?'caída':'subida')+' de la semana anterior.';
+  }
+  return t;
+}
+
+// Unidades presentes en una categoría: si hay más de una, no se suma.
+function unidadesCat(porProd,categoria){
+  return new Set(Object.keys(porProd)
+    .filter(k=>porProd[k].cat===categoria)
+    .map(k=>porProd[k].uni||''));
+}
+
+function renderDash(){
+  const el=document.getElementById('dash-body');
+  if(!DASH){el.innerHTML='<div class="empty">Sin datos</div>';return;}
+  const hoy=DASH.hoy;
+  // Chips de rango (se redibujan solo acá porque no tienen foco de teclado)
+  document.getElementById('dash-rangos').innerHTML=RANGOS.map(r=>
+    `<button class="dash-chip${dashRango.etq===r.id?' activa':''}" onclick="setRango('${r.id}')">${r.lbl}</button>`
+  ).join('')+(dashRango.etq==='libre'?'<button class="dash-chip activa">Personalizado</button>':'');
+
+  // --- semanas calendario (lunes a domingo) ---
+  const s0=lunesDe(hoy), s1=sumaDias(s0,-7), s2=sumaDias(s0,-14);
+  const A=rango(s0,sumaDias(s0,6)), B=rango(s1,sumaDias(s1,6)), C=rango(s2,sumaDias(s2,6));
+
+  let h='';
+
+  // Avisos de calidad de dato: se muestran arriba, no escondidos al final.
+  const avisos=[];
+  if(DASH.diasNegativos)avisos.push('Hay <b>'+DASH.diasNegativos+
+    ' día(s)-producto con consumo negativo</b> en bebidas: sobra stock contra lo esperado, o sea error de conteo o una entrada sin registrar. No se recortan a cero para no inflar los totales.');
+  if(DASH.correcciones)avisos.push('<b>'+DASH.correcciones+
+    ' corrección(es)</b> de barra quedaron fuera de estos números: no descuentan stock. Se ven en el Historial.');
+  if(avisos.length)h+='<div class="dash-nota">⚠️ '+avisos.join('<br><br>')+'</div>';
+
+  // ---------- 1. KPI de la semana ----------
+  h+='<div class="dash-sec">Semana en curso</div>'+
+     '<div class="dash-sec-sub">Lunes '+dLbl(s0)+' a hoy, contra la semana anterior completa. '+
+     'Semana calendario — no depende del rango elegido arriba.</div>';
+
+  // Productos sobre su propio promedio de 3 semanas. Se mide por producto y no
+  // por categoría porque dentro de un producto la unidad es siempre la misma:
+  // es la única comparación que no mezcla kilos con botellas.
+  let sobrePromedio=0, conBase=0;
+  Object.keys(A.porProd).forEach(k=>{
+    const vs=[A.porProd[k].sal,B.porProd[k]?B.porProd[k].sal:0,C.porProd[k]?C.porProd[k].sal:0];
+    const prom=(vs[0]+vs[1]+vs[2])/3;
+    if(prom<=0)return;
+    conBase++;
+    if(vs[0]>prom*1.1)sobrePromedio++;   // 10% de holgura: no es alerta el ruido normal
+  });
+
+  h+='<div class="dash-kpi">'+
+    '<div class="kpi-card"><div class="kpi-lbl">Salidas registradas · barra</div>'+
+      '<div class="kpi-val">'+A.tot.nSal+'</div>'+deltaHtml(A.tot.nSal,B.tot.nSal,'sem. anterior')+'</div>'+
+    '<div class="kpi-card"><div class="kpi-lbl">Entradas registradas</div>'+
+      '<div class="kpi-val">'+A.tot.nEnt+'</div>'+deltaHtml(A.tot.nEnt,B.tot.nEnt,'sem. anterior')+'</div>'+
+    '<div class="kpi-card"><div class="kpi-lbl">Bebidas consumidas (und)</div>'+
+      '<div class="kpi-val">'+nf(A.tot.und)+'</div>'+deltaHtml(A.tot.und,B.tot.und,'sem. anterior')+'</div>'+
+    '<div class="kpi-card"><div class="kpi-lbl">Productos sobre su promedio</div>'+
+      '<div class="kpi-val">'+sobrePromedio+'</div>'+
+      '<div class="kpi-delta igual">de '+conBase+' con historia</div></div>'+
+  '</div>';
+
+  // ---------- 2. Insights ----------
+  const ins=armarInsights(A.porProd,B.porProd,C.porProd);
+  h+='<div class="dash-sec">Lo que cambió</div>'+
+     '<div class="dash-sec-sub">Semana en curso contra la anterior, ordenado por relevancia '+
+     '(cuánto cambió, ponderado por cuánto se mueve).</div>';
+  if(!ins.length){
+    h+='<div class="empty">Ningún producto cambió respecto de la semana pasada.</div>';
+  }else{
+    const maxScore=ins[0].score||1;
+    h+=ins.slice(0,12).map(i=>{
+      const cls=i.d>0?'sube':'baja';
+      const w=Math.max(6,Math.round(i.score/maxScore*100));
+      return '<div class="ins"><div class="ins-txt">'+fraseInsight(i)+'</div>'+
+        '<div class="ins-bar"><span class="'+cls+'" style="width:'+w+'%"></span></div>'+
+        '<div class="ins-meta">'+esc(i.mod)+' · '+(i.d>0?'+':'−')+nf(Math.abs(i.d))+' '+esc(i.uni||'')+'</div></div>';
+    }).join('');
+    if(ins.length>12)h+='<div class="dash-sec-sub">Se muestran los 12 más relevantes de '+ins.length+' con cambio.</div>';
+  }
+
+  // ---------- 3. Semana por producto, agrupado por categoría ----------
+  h+='<div class="dash-sec">Detalle semanal por producto</div>'+
+     '<div class="dash-sec-sub">Salidas de cada producto en las últimas tres semanas calendario.</div>';
+  const claves=[...new Set([].concat(Object.keys(A.porProd),Object.keys(B.porProd),Object.keys(C.porProd)))];
+  if(!claves.length)h+='<div class="empty">Sin movimientos en las últimas tres semanas.</div>';
+  else{
+    const porCat={};
+    claves.forEach(k=>{
+      const ref=A.porProd[k]||B.porProd[k]||C.porProd[k];
+      (porCat[ref.cat]=porCat[ref.cat]||[]).push({k:k,ref:ref});
+    });
+    h+='<table class="dtab"><tr><th>Producto</th><th>Esta</th><th>Ant.</th><th>Hace 2</th></tr>';
+    Object.keys(porCat).sort((a,b)=>a.localeCompare(b)).forEach(cat=>{
+      h+='<tr class="catrow"><td colspan="4">'+esc(cat)+'</td></tr>';
+      porCat[cat]
+        .sort((x,y)=>((A.porProd[y.k]?A.porProd[y.k].sal:0)-(A.porProd[x.k]?A.porProd[x.k].sal:0)))
+        .forEach(o=>{
+          const v=[A,B,C].map(R=>R.porProd[o.k]?R.porProd[o.k].sal:0);
+          h+='<tr><td title="'+esc(o.ref.nombre)+'">'+esc(o.ref.nombre)+'</td>'+
+            v.map(x=>'<td'+(x<0?' class="neg"':'')+'>'+nf(x)+'</td>').join('')+'</tr>';
+        });
+    });
+    h+='</table>';
+  }
+
+  // ---------- 4. Mes acumulado por categoría ----------
+  const m0=primeroMes(hoy), mA=mesAnterior(hoy), diaN=fechaLocal(hoy).getDate();
+  // Se compara el MISMO TRAMO de días de los dos meses, no el mes en curso
+  // contra el mes anterior completo. El día 2 de agosto, comparar 2 días contra
+  // 31 daba "−95%" en todas las categorías: parecía un derrumbe de la operación
+  // cuando el mes simplemente acababa de empezar. Para ver un mes completo está
+  // el chip "Mes anterior" del filtro.
+  const finA=finMes(mA), candA=sumaDias(mA,diaN-1);
+  const hastaA=candA<finA?candA:finA;   // febrero no tiene día 30: se corta en su fin de mes
+  const MA=rango(m0,hoy), MB=rango(mA,hastaA);
+  const tramo=' 1–'+diaN;
+  h+='<div class="dash-sec">Mes acumulado por categoría</div>'+
+     '<div class="dash-sec-sub">'+mLbl(m0)+tramo+' contra '+mLbl(mA)+' en el mismo tramo ('+
+     dLbl(mA)+' a '+dLbl(hastaA)+'), para que el porcentaje sea comparable. '+
+     'Cuando una categoría mezcla unidades (kg con botellas) se muestran los movimientos, '+
+     'porque sumar cantidades distintas no daría un número real.</div>';
+  const cats=[...new Set([].concat(
+    Object.keys(MA.porProd).map(k=>MA.porProd[k].cat),
+    Object.keys(MB.porProd).map(k=>MB.porProd[k].cat)))].sort((a,b)=>a.localeCompare(b));
+  if(!cats.length)h+='<div class="empty">Sin movimientos este mes ni el anterior.</div>';
+  else{
+    h+='<table class="dtab"><tr><th>Categoría</th><th>'+esc(mLbl(m0))+tramo+'</th><th>'+esc(mLbl(mA))+tramo+'</th><th>Var.</th></tr>';
+    cats.forEach(c=>{
+      const uds=new Set([...unidadesCat(MA.porProd,c),...unidadesCat(MB.porProd,c)]);
+      uds.delete('');
+      const mixto=uds.size>1;
+      const suma=(R,campo)=>Object.keys(R.porProd).filter(k=>R.porProd[k].cat===c)
+        .reduce((s,k)=>s+R.porProd[k][campo],0);
+      const a=mixto?suma(MA,'nSal'):suma(MA,'sal');
+      const b=mixto?suma(MB,'nSal'):suma(MB,'sal');
+      const uni=mixto?'mov.':([...uds][0]||'');
+      const pct=b>0?Math.round((a-b)/b*100):null;
+      h+='<tr><td title="'+esc(c)+'">'+esc(c)+'</td>'+
+        '<td'+(mixto?' class="mix"':'')+'>'+nf(a)+' '+esc(uni)+'</td>'+
+        '<td'+(mixto?' class="mix"':'')+'>'+nf(b)+'</td>'+
+        '<td class="'+(pct===null?'mix':pct>0?'neg':'')+'">'+(pct===null?'—':(pct>0?'+':'')+pct+'%')+'</td></tr>';
+    });
+    h+='</table>';
+  }
+
+  // ---------- 5. Día a día del rango elegido ----------
+  h+='<div class="dash-sec">Día a día</div>'+
+     '<div class="dash-sec-sub">'+dLbl(dashRango.d1)+' a '+dLbl(dashRango.d2)+
+     ' — este bloque sí usa el rango de fechas elegido arriba. La resta compara con el día anterior de la lista.</div>';
+  const filas=filasDash(dashRango.d1,dashRango.d2);
+  const porDia={};
+  filas.forEach(f=>{
+    if(!porDia[f[0]])porDia[f[0]]={und:0,nSal:0,nEnt:0};
+    porDia[f[0]].nSal+=f[6];porDia[f[0]].nEnt+=f[7];
+    if(DASH.productos[f[1]][2]==='Bebidas')porDia[f[0]].und+=f[2];
+  });
+  const dias=Object.keys(porDia).sort();
+  if(!dias.length)h+='<div class="empty">Sin movimientos en el rango elegido.</div>';
+  else{
+    // "Registros" y no "Mov. barra": nEnt también cuenta las entradas de bebidas,
+    // así que la columna son todos los movimientos registrados ese día.
+    h+='<table class="dtab"><tr><th>Día</th><th>Bebidas und</th><th>Δ día ant.</th><th>Registros</th></tr>';
+    dias.slice().reverse().forEach((d,i,arr)=>{
+      const cur=porDia[d];
+      const ant=arr[i+1]?porDia[arr[i+1]]:null;   // el siguiente en la lista invertida = el día anterior
+      const dd=ant?cur.und-ant.und:null;
+      h+='<tr><td>'+dLbl(d)+'</td>'+
+        '<td'+(cur.und<0?' class="neg"':'')+'>'+nf(cur.und)+'</td>'+
+        '<td class="'+(dd===null?'mix':dd>0?'neg':'')+'">'+(dd===null?'—':(dd>0?'+':dd<0?'−':'')+nf(Math.abs(dd)))+'</td>'+
+        '<td>'+(cur.nSal+cur.nEnt)+'</td></tr>';
+    });
+    h+='</table>';
+  }
+
+  h+='<div class="dash-sec-sub" style="margin-top:16px">Datos desde '+dLbl(DASH.desde)+'. '+
+     'En bebidas el consumo es la resta entre dos conteos físicos, así que incluye venta, cortesía, merma y error de conteo — '+
+     'es la varianza que el proyecto busca medir. En barra son los movimientos que alguien registró.</div>';
+
+  el.innerHTML=h;
 }
 
 // ============================================================
