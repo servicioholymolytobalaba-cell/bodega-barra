@@ -197,6 +197,9 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
 .b-critico{background:#C2410C;color:#fff}
 .b-bajo{background:var(--amber);color:#fff}
 .b-ok{background:#E6EFEA;color:var(--teal)}
+/* Explica un "CRÍTICO" que pide 0 cajas: el problema es el par, no el stock. */
+.ped-nota-par{background:var(--amber-c);border-radius:8px;padding:6px 8px;margin-top:6px;
+  font-size:10px;color:#6B3D06;line-height:1.4}
 .ped-cajas{display:flex;align-items:center;gap:5px;flex-shrink:0}
 .ped-cajas button{width:30px;height:30px;border-radius:8px;border:1.5px solid var(--border);
   background:#fff;font-size:16px;font-weight:700;color:var(--text2);cursor:pointer;font-family:inherit}
@@ -1738,12 +1741,31 @@ function renderPedidoSalon(){
     if(x.stock===null)sub='Sin conteo — cuéntala para que entre al pedido';
     else if(x.diasCobertura!==null)sub=`Quedan ${x.stock} u · alcanza ${x.diasCobertura} día(s)`;
     else sub=`Quedan ${x.stock} u · sin consumo medido aún`;
+    // Si llegó mercadería después del conteo, el desglose va explícito: sin esto
+    // el pedido decía "quiebre" con el camión ya en bodega, y con esto se ve
+    // POR QUÉ el número cambió.
+    if(x.recibidoPost>0)
+      sub+=` <span style="color:var(--green);font-weight:700">(${x.conteoBase} contadas + ${x.recibidoPost} recibidas)</span>`;
     if(x.enTransito>0)sub+=` · ${x.enTransito} u ya pedidas`;
+    // "CRÍTICO" pidiendo 0 cajas parece un error del sistema, y no lo es: el
+    // stock ya cubre el máximo definido, pero ese máximo quedó por debajo del
+    // consumo real. Sin decirlo, el aviso se lee como bug y se ignora — que es
+    // justo lo contrario de lo que hay que hacer.
+    let notaPar='';
+    if(x.cajas===0&&(x.estado==='critico'||x.estado==='bajo')&&x.maximo!==null){
+      notaPar=`<div class="ped-nota-par">Ya cubre el máximo definido (${x.maximo} u), así que no se pide nada. `+
+        `Pero alcanza ${x.diasCobertura} día(s) y la reposición tarda ${(PEDSAL.parametros||{}).leadTime||4} — `+
+        (x.maximoSugerido
+          ? `el máximo debería ser ~<b>${x.maximoSugerido} u</b>. Conviene subirlo en el Sheet.`
+          : `conviene revisar el máximo (aún faltan días de historia para sugerir un número).`)+
+        `</div>`;
+    }
     const cajas=x.cajas===null?0:x.cajas;
     html+=`<div class="ped-row${clase}">
       <div class="ped-info">
         <div class="ped-nom"><span class="ped-badge ${cls}">${txt}</span>${esc(x.producto)}</div>
         <div class="ped-sub">${sub}</div>
+        ${notaPar}
       </div>
       <div class="ped-cajas">
         <button onclick="ajCajas(${i},-1)">−</button>
@@ -2053,6 +2075,47 @@ function generarPDFSemanal(data) {
   // misma columna sería inventar un número.
   const beb = data.bebidas || [];
   const rs = data.rangoSemana || null;
+  // Detalle de CADA entrada registrada, con folio y responsable. Angela lo pidió
+  // así: en el PDF no aparecían "las bebidas que entraron". El total por producto
+  // no alcanza — para cuadrar contra la factura hace falta el registro uno a uno.
+  const entB = data.entradasBebidas || [];
+  const dm = f => f && f.length===10 ? f.slice(8)+'/'+f.slice(5,7) : (f||'—');
+  let bloqueEntradas = '';
+  if(entB.length){
+    const totE = entB.reduce((s,e)=>s+Number(e.cantidad||0),0);
+    bloqueEntradas = `
+    <div style="margin-top:14px">
+      <div style="font-size:11px;font-weight:700;color:#085041;margin-bottom:5px">
+        Entradas de bebidas registradas en la semana (${entB.length})
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:10.5px">
+        <thead><tr style="background:#F1EFE8;color:#5F5E5A">
+          <th style="padding:5px 7px;text-align:left">Folio</th>
+          <th style="padding:5px 7px;text-align:center">Fecha</th>
+          <th style="padding:5px 7px;text-align:center">Hora</th>
+          <th style="padding:5px 7px;text-align:left">Producto</th>
+          <th style="padding:5px 7px;text-align:center">Cantidad</th>
+          <th style="padding:5px 7px;text-align:left">Recibió</th>
+        </tr></thead>
+        <tbody>
+        ${entB.map(e=>`<tr>
+          <td style="padding:4px 7px;border-bottom:1px solid #eee;color:#666">${esc(e.folio)}</td>
+          <td style="padding:4px 7px;border-bottom:1px solid #eee;text-align:center">${dm(e.fecha)}</td>
+          <td style="padding:4px 7px;border-bottom:1px solid #eee;text-align:center;color:#666">${esc(e.hora)}</td>
+          <td style="padding:4px 7px;border-bottom:1px solid #eee">${esc(e.producto)}</td>
+          <td style="padding:4px 7px;border-bottom:1px solid #eee;text-align:center;font-weight:700;color:#3B6D11">+${e.cantidad}</td>
+          <td style="padding:4px 7px;border-bottom:1px solid #eee;color:#666">${esc(e.responsable)}</td>
+        </tr>`).join('')}
+        <tr><td colspan="4" style="padding:5px 7px;font-weight:700;text-align:right">TOTAL RECIBIDO</td>
+            <td style="padding:5px 7px;text-align:center;font-weight:700;color:#3B6D11">+${totE}</td>
+            <td></td></tr>
+        </tbody>
+      </table>
+    </div>`;
+  } else {
+    bloqueEntradas = `<div style="font-size:10px;color:#888;margin-top:10px">
+      Sin entradas de bebidas registradas en la semana.</div>`;
+  }
   let bloqueBebidas = '';
   if(beb.length){
     const totCons=beb.reduce((s,b)=>s+b.consumo,0);
@@ -2062,7 +2125,7 @@ function generarPDFSemanal(data) {
       return `<tr style="${b.consumo?'background:#F0FBF5':''}">
         <td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee">${b.producto}</td>
         <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;font-weight:600;color:#0000CC">${b.apertura==null?'N/D':b.apertura}</td>
-        <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;color:#3B6D11;font-weight:${b.entradas?'700':'400'}">${b.entradas||'—'}</td>
+        <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;color:#3B6D11;font-weight:${b.entradas?'700':'400'}">${b.entradas||'—'}${b.entradasSinCerrar>0?`<br><span style="font-size:8.5px;color:#6B3D06;font-weight:600">${b.entradasSinCerrar} sin cerrar</span>`:''}</td>
         <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;font-weight:700;color:${neg?'#A32D2D':'#993C1D'}">${b.consumo}${neg?' ⚠':''}</td>
         <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;font-weight:700;color:#085041">${b.ultimoConteo==null?'N/D':b.ultimoConteo}</td>
         <td style="padding:5px 8px;font-size:10px;text-align:center;border-bottom:1px solid #eee;color:#666">${b.fechaUltimo?b.fechaUltimo.slice(8)+'/'+b.fechaUltimo.slice(5,7):'—'}</td>
@@ -2089,6 +2152,11 @@ function generarPDFSemanal(data) {
         <tbody>${filasB}</tbody>
       </table>
       ${beb.some(b=>b.consumo<0)?`<div style="font-size:10px;color:#A32D2D;margin-top:6px">⚠ Un consumo negativo significa que sobra stock contra lo esperado: error de conteo o una entrada sin registrar.</div>`:''}
+      ${beb.some(b=>b.entradasSinCerrar>0)?`<div style="font-size:10px;color:#6B3D06;background:#FAEEDA;border-radius:5px;padding:6px 8px;margin-top:6px">
+        Hay mercadería recibida <b>después del último conteo</b>: ya está sumada en "Recibido", pero todavía
+        <b>no se refleja en el consumo</b>, porque el consumo se calcula entre dos conteos y falta el de cierre.
+        Se cuadra con el conteo siguiente.</div>`:''}
+      ${bloqueEntradas}
     </div>`;
   } else {
     bloqueBebidas = `
@@ -2096,7 +2164,8 @@ function generarPDFSemanal(data) {
       <b>Sin datos de bebidas para ${semana}.</b> El consumo de bebidas necesita al menos
       <b>dos conteos</b> en el rango${rs?' ('+rs.desde+' a '+rs.hasta+')':''}: uno abre el período y el siguiente lo cierra.
       ${rs&&rs.error?'<br>Detalle técnico: '+esc(rs.error):''}
-    </div>`;
+    </div>
+    ${bloqueEntradas}`;
   }
 
   const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
