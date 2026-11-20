@@ -487,6 +487,30 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
     </div>
   </div>
 
+  <!-- CONTEO DE BODEGA (solo Jorge y Angela): conteo libre, el conteo GANA.
+       Por cada producto contado el servidor registra un movimiento 'ajuste'
+       por la diferencia contra el kardex. El kardex se muestra recién después
+       de escribir el número, para no influir el conteo. -->
+  <div id="tab-bodega" class="tab-body" style="display:none">
+    <div class="banner banner-ok"><i class="ti ti-building-warehouse"></i> Conteo de bodega — tu conteo pasa a ser el stock real</div>
+    <div class="cnt-progress">Cuenta solo los productos que quieras. Al guardar, el kardex queda igual a lo contado y las salidas siguen descontando desde ahí.</div>
+    <div class="search-wrap">
+      <i class="ti ti-search s-ico"></i>
+      <input type="text" id="bod-srch" placeholder="Buscar producto o categoría..." oninput="renderBodega()">
+    </div>
+    <div class="cnt-progress" id="bod-progress"></div>
+    <div id="bod-list"></div>
+    <div class="reg-panel" id="bod-footer">
+      <div class="sec-lbl">Observación <span class="req-star">* obligatoria</span></div>
+      <textarea class="note-inp" id="nota-bod" maxlength="500" placeholder="Ej: conteo de bodega / diferencia en Stout: subieron 6 sin requerimiento (mínimo 5 letras)" oninput="actualizarBtnBod()"></textarea>
+      <button class="btn-conf teal" id="btn-bod" onclick="guardarBodega()" disabled>
+        <i class="ti ti-device-floppy"></i> Guardar conteo de bodega
+      </button>
+      <div id="sending-bod" class="sending" style="display:none"><i class="ti ti-loader"></i> Guardando...</div>
+      <div id="bod-result"></div>
+    </div>
+  </div>
+
   <!-- CONSUMO + CONTEOS (encargado) -->
   <!-- Dos vistas del mismo dato: el consumo es lo DERIVADO de los conteos, y
        "Conteos" son los conteos tal como quedaron registrados. Antes solo se
@@ -623,6 +647,7 @@ const TABS_POR_ROL={
     {id:'reque',label:'Requerim.',icon:'ti-inbox',badge:true},
     {id:'conteo',label:'Conteo',icon:'ti-clipboard-check'},
     {id:'inventario',label:'Inventario',icon:'ti-list-check'},
+    {id:'bodega',label:'Bodega',icon:'ti-building-warehouse'},   // solo si PUEDE_BODEGA (Jorge y Angela)
     {id:'consumo',label:'Consumo',icon:'ti-trending-down'},
     {id:'stock',label:'Stock',icon:'ti-chart-bar'},
     {id:'pedidos',label:'Pedidos',icon:'ti-shopping-cart'},
@@ -655,6 +680,9 @@ let PED=[];              // pedidos barra
 let INV={areas:[]}, invCargado=false, invArea=null;
 // Historial con cantidades (solo encargado)
 let INVH=null, invhCargado=false, invhAbierto={}, invModo='contar';
+// Conteo de bodega (solo Jorge y Angela). BOD guarda lo tecleado por producto
+// para que sobreviva al filtrar/buscar.
+let PUEDE_BODEGA=false, BOD={};
 let reqPend=0;
 
 // ---------- DATOS DEMO ----------
@@ -703,6 +731,11 @@ function demoPost(payload){
   if(payload.op==='leer'&&payload.que==='conteoAreas'){
     const rolesArea={BARRA:['bartender','encargado'],MENAJE:['garzon','encargado']};
     return {status:'ok',areas:DEMO_INV_AREAS.filter(a=>(rolesArea[a.area]||[]).includes(usr&&usr.rol))};
+  }
+  if(payload.op==='ajusteConteoBodega'){
+    const detalle=(payload.items||[]).map(it=>{const p=stk.find(x=>x.nombre===it.producto)||{s:0};return {producto:it.producto,kardex:p.s,contado:it.contado,diferencia:Math.round((it.contado-p.s)*1000)/1000};});
+    const aj=detalle.filter(f=>f.diferencia!==0).length;
+    return {status:'ok',folio:aj?'AJ-0'+(++demoFolio):'',contados:detalle.length,ajustados:aj,detalle};
   }
   if(payload.op==='conteosAreaHist')return {status:'ok',dias:30,conteos:[
     {folio:'CB-0002',area:'BARRA',titulo:'Conteo de cierre de barra',fecha:'2026-11-20',hora:'23:55',responsable:'Demo Bartender',obs:'Cierre normal',
@@ -808,7 +841,7 @@ async function doLogin(){
   // El servidor ya devolvió el panel dentro de la misma respuesta del login:
   // un solo viaje en vez de dos. Con el arranque en frío de Apps Script eso
   // era la mitad de la espera al entrar.
-  if(DEMO){salonCargado=true;pedCargado=true;}
+  if(DEMO){salonCargado=true;pedCargado=true;PUEDE_BODEGA=usr.rol==='encargado';}
   else if(r.salon||r.stock||r.consumo){aplicarPanel(r);}
   else{
     e.textContent='Cargando tus datos...';           // respaldo por si el servidor es antiguo
@@ -856,6 +889,7 @@ function aplicarPanel(p){
   }
   if(p.pedidos&&p.pedidos.status==='ok'){PED=p.pedidos.pedidos||[];pedCargado=true;}
   if(p.conteoAreas&&p.conteoAreas.status==='ok'){INV.areas=p.conteoAreas.areas||[];invCargado=true;}
+  PUEDE_BODEGA=!!p.puedeContarBodega;
 }
 
 // El badge de requerimientos se refresca solo cada 75 s mientras haya
@@ -880,6 +914,8 @@ function logout(){
   CONTEOS=null;conteosCargado=false;chAbierto={};
   INV={areas:[]};invCargado=false;invArea=null;
   INVH=null;invhCargado=false;invhAbierto={};invModo='contar';
+  PUEDE_BODEGA=false;BOD={};
+  document.getElementById('bod-list').innerHTML='';document.getElementById('bod-result').innerHTML='';document.getElementById('nota-bod').value='';
   document.getElementById('inv-hist').innerHTML='';
   document.getElementById('inv-items').innerHTML='';   // los números de uno no quedan para el siguiente
   document.getElementById('nota-inv').value='';
@@ -904,7 +940,8 @@ function buildNav(){
   // Al garzón la pestaña de inventario (menaje) solo le aparece si su área ya
   // tiene ítems cargados: una pestaña vacía en la app del salón solo confunde.
   const tabs=(TABS_POR_ROL[usr.rol]||TABS_POR_ROL.garzon)
-    .filter(t=>!(t.id==='inventario'&&usr.rol==='garzon'&&invCargado&&!INV.areas.length));
+    .filter(t=>!(t.id==='inventario'&&usr.rol==='garzon'&&invCargado&&!INV.areas.length))
+    .filter(t=>t.id!=='bodega'||PUEDE_BODEGA);   // la pestaña ni existe para el resto
   document.getElementById('nav-tabs').innerHTML=tabs.map(t=>
     `<button class="nav-tab" id="navtab-${t.id}" onclick="goTab('${t.id}')">
       <i class="ti ${t.icon}"></i> ${t.label}${t.id==='inventario'&&INV.areas.some(a=>a.toca)?' •':''}${t.badge?'<span class="nav-badge" id="req-badge" style="display:none">0</span>':''}
@@ -914,7 +951,7 @@ function buildNav(){
 
 let salonCargado=false, pedCargado=false, consumoCargado=false;
 function goTab(t){
-  ['registro','reque','conteo','inventario','consumo','historial','stock','pedidos'].forEach(id=>{
+  ['registro','reque','conteo','inventario','bodega','consumo','historial','stock','pedidos'].forEach(id=>{
     const el=document.getElementById('tab-'+id);
     if(el)el.style.display=id===t?'block':'none';
     const nb=document.getElementById('navtab-'+id);
@@ -927,6 +964,7 @@ function goTab(t){
     if(!salonCargado)cargarSalon();
     else if(!document.getElementById('cnt-bebidas').querySelector('.cnt-inp'))renderConteo();
   }
+  if(t==='bodega')renderBodega();
   if(t==='inventario'){
     const esEnc=usr.rol==='encargado';
     document.getElementById('inv-modo').style.display=esEnc?'grid':'none';
@@ -1413,6 +1451,97 @@ async function guardarConteo(){
     // Los números siguen en pantalla: se puede reintentar sin recontar
     document.getElementById('btn-cnt').disabled=false;
     toast(msgErr||'No se pudo guardar — tus números siguen aquí, reintenta','err');
+  }
+}
+
+// ============================================================
+// CONTEO DE BODEGA — solo Jorge y Angela; el conteo gana
+// ============================================================
+function bodNum(v){const t=String(v??'').trim().replace(',','.');return /^\d{1,4}(\.\d{1,3})?$/.test(t)?Number(t):null;}
+function renderBodega(){
+  if(!PUEDE_BODEGA){document.getElementById('bod-list').innerHTML='<div class="empty">No tienes acceso a esta pantalla.</div>';return;}
+  const q=(document.getElementById('bod-srch').value||'').toLowerCase();
+  const lista=stk.filter(p=>!q||p.nombre.toLowerCase().includes(q)||String(p.cat).toLowerCase().includes(q));
+  const el=document.getElementById('bod-list');
+  if(!stk.length){el.innerHTML='<div class="empty">Cargando stock...</div>';return;}
+  if(!lista.length){el.innerHTML='<div class="empty">Sin resultados</div>';updBodProgreso();return;}
+  let cat=null;
+  el.innerHTML=lista.map(p=>{
+    const i=stk.indexOf(p);
+    const head=p.cat!==cat?`<div class="sec-lbl" style="margin-top:10px">${esc(p.cat)}</div>`:'';
+    cat=p.cat;
+    return head+`<div class="cnt-card"><div class="cnt-head"><span class="cnt-name">${esc(p.nombre)}</span><span class="cnt-prev">${esc(p.unidad)}</span></div>
+      <div class="cnt-inputs solo"><div><div class="cnt-lbl">Contado</div><input type="text" inputmode="decimal" class="cnt-inp${BOD[p.nombre]!==undefined?' done':''}" value="${esc(BOD[p.nombre]??'')}" oninput="bodInput(${i},this.value)"></div>
+      <div><div class="cnt-lbl">Kardex → diferencia</div><div class="cnt-total" id="bod-d-${i}">${bodDifTxt(p)}</div></div></div></div>`;
+  }).join('');
+  updBodProgreso();
+}
+// El kardex recién aparece cuando ya hay un número escrito: así no influye el conteo.
+function bodDifTxt(p){
+  const v=BOD[p.nombre]; if(v===undefined||v==='')return '—';
+  const n=bodNum(v); if(n===null)return '<span style="color:var(--coral)">número inválido</span>';
+  const d=Math.round((n-p.s)*1000)/1000;
+  const col=d===0?'var(--green)':'var(--coral)';
+  return `${esc(p.s)} → <b style="color:${col}">${d>0?'+':''}${esc(d)}</b>`;
+}
+function bodInput(i,v){
+  const p=stk[i]; if(!p)return;
+  if(String(v).trim()==='')delete BOD[p.nombre]; else BOD[p.nombre]=v;
+  const d=document.getElementById('bod-d-'+i); if(d)d.innerHTML=bodDifTxt(p);
+  updBodProgreso();
+}
+function bodItems(){
+  const items=[],malos=[];let dif=0;
+  Object.keys(BOD).forEach(nombre=>{
+    const p=stk.find(x=>x.nombre===nombre); const n=bodNum(BOD[nombre]);
+    if(!p||n===null){malos.push(nombre);return;}
+    if(Math.round((n-p.s)*1000)!==0)dif++;
+    items.push({producto:nombre,contado:n,kardexVisto:p.s});
+  });
+  return {items,malos,dif};
+}
+function updBodProgreso(){
+  const {items,malos,dif}=bodItems();
+  document.getElementById('bod-progress').textContent=`${items.length} producto(s) contados · ${dif} con diferencia`+(malos.length?` · revisa: ${malos.join(', ')}`:'');
+  actualizarBtnBod();
+}
+function actualizarBtnBod(){
+  const {items,malos}=bodItems();
+  document.getElementById('btn-bod').disabled=!(items.length&&!malos.length&&obsValida(document.getElementById('nota-bod').value));
+}
+async function guardarBodega(){
+  if(!PUEDE_BODEGA){toast('No tienes acceso al conteo de bodega','err');return;}
+  const {items,malos,dif}=bodItems();
+  const obs=document.getElementById('nota-bod').value.trim();
+  if(!items.length||malos.length||!obsValida(obs)){toast('Revisa los números y la observación','err');return;}
+  // Diferencias grandes (más de la mitad del kardex): suelen ser un dígito de más.
+  const grandes=items.filter(it=>{const p=stk.find(x=>x.nombre===it.producto);return p&&Math.abs(it.contado-p.s)>Math.max(p.s,1)*0.5;});
+  if(grandes.length&&!confirm('Diferencias grandes en:\n'+grandes.map(it=>{const p=stk.find(x=>x.nombre===it.producto);return `${it.producto}: kardex ${p.s} → contado ${it.contado}`;}).join('\n')+'\n\n¿Están bien contadas?'))return;
+  if(!confirm(`Vas a dejar el kardex igual a tu conteo en ${items.length} producto(s) (${dif} con diferencia). ¿Guardar?`))return;
+  document.getElementById('btn-bod').disabled=true;
+  document.getElementById('sending-bod').style.display='flex';
+  let j=null;
+  try{j=await postOp({op:'ajusteConteoBodega',items,observacion:obs});}catch(e){j=null;}
+  if(j&&j.status==='cambio'){
+    // El kardex cambió mientras contabas: se muestran los números nuevos y se confirma.
+    (j.cambios||[]).forEach(c=>{const p=stk.find(x=>x.nombre===c.producto);if(p)p.s=c.actual;});
+    const txt=(j.cambios||[]).map(c=>`${c.producto}: al contar decía ${c.visto}, ahora ${c.actual} → ajuste ${c.diferencia>0?'+':''}${c.diferencia}`).join('\n');
+    if(confirm('El kardex cambió mientras contabas (alguien registró un movimiento):\n'+txt+'\n\n¿Tu conteo sigue siendo el real?')){
+      try{j=await postOp({op:'ajusteConteoBodega',items:items.map(it=>{const p=stk.find(x=>x.nombre===it.producto);return {...it,kardexVisto:p?p.s:it.kardexVisto};}),observacion:obs,confirmarCambios:true});}catch(e){j=null;}
+    }else{j={status:'cancelado',msg:'Conteo no guardado: revisa esos productos y vuelve a guardar'};renderBodega();}
+  }
+  document.getElementById('sending-bod').style.display='none';
+  if(j&&j.status==='ok'){
+    // El kardex local queda igual a lo contado, como en el servidor.
+    (j.detalle||[]).forEach(f=>{const p=stk.find(x=>x.nombre===f.producto);if(p)p.s=f.contado;});
+    const conDif=(j.detalle||[]).filter(f=>f.diferencia!==0);
+    document.getElementById('bod-result').innerHTML=`<div class="banner banner-ok" style="margin-top:10px"><i class="ti ti-check"></i> ${j.folio?esc(j.folio)+' · ':''}${j.contados} contados · ${j.ajustados} ajustados</div>`+
+      conDif.map(f=>`<div class="cnt-progress" style="text-align:left">${esc(f.producto)}: ${esc(f.kardex)} → ${esc(f.contado)} (<b>${f.diferencia>0?'+':''}${esc(f.diferencia)}</b>)</div>`).join('');
+    toast(`${j.folio||'Sin diferencias'} · conteo de bodega guardado`,'ok');
+    BOD={};document.getElementById('nota-bod').value='';renderBodega();renderProds();
+  }else{
+    actualizarBtnBod();
+    toast((j&&j.msg)||'No se pudo guardar — tus números siguen aquí, reintenta','err');
   }
 }
 
@@ -2333,7 +2462,7 @@ function generarPDFSemanal(data) {
   const productos = {};
   movsInf.forEach(m => {
     if(!productos[m.producto]) {
-      productos[m.producto] = { entradas:0, salidas:0, mermas:0, traspasos:0, correcciones:0, unidad:m.unidad };
+      productos[m.producto] = { entradas:0, salidas:0, mermas:0, traspasos:0, correcciones:0, ajustes:0, unidad:m.unidad };
     }
     const p = productos[m.producto];
     if(m.tipo==='entrada')    p.entradas    += Number(m.cantidad);
@@ -2341,6 +2470,7 @@ function generarPDFSemanal(data) {
     else if(m.tipo==='merma')      p.mermas      += Number(m.cantidad);
     else if(m.tipo==='traspaso')   p.traspasos   += Number(m.cantidad);
     else if(m.tipo==='corrección'||m.tipo==='correccion') p.correcciones += Number(m.cantidad);
+    else if(m.tipo==='ajuste')     p.ajustes     += Number(m.cantidad);   // conteo de bodega (con signo)
   });
 
   let totEnt=0, totSal=0, totMer=0, totTras=0;
@@ -2351,14 +2481,14 @@ function generarPDFSemanal(data) {
   cats.forEach(cat => {
     const prods = stk.filter(p => p.cat === cat);
     const filas = prods.map(p => {
-      const m = productos[p.nombre] || {entradas:0,salidas:0,mermas:0,traspasos:0};
+      const m = productos[p.nombre] || {entradas:0,salidas:0,mermas:0,traspasos:0,ajustes:0};
       const baseInfo = bases[p.nombre];
       const base = baseInfo ? baseInfo.base : null;
       const volumenL = baseInfo ? baseInfo.volumenL : null;
       const baseTxt = (base===null || base===undefined) ? 'N/D' : base;
-      const final = (base===null || base===undefined) ? 'N/D' : (base + m.entradas - m.salidas - m.mermas - m.traspasos);
+      const final = (base===null || base===undefined) ? 'N/D' : (base + m.entradas - m.salidas - m.mermas - m.traspasos + (m.ajustes||0));
       const finalLitrosTxt = (final==='N/D') ? '—' : (volumenL ? (final*volumenL).toFixed(2) : '—');
-      const hayMov = m.entradas||m.salidas||m.mermas||m.traspasos;
+      const hayMov = m.entradas||m.salidas||m.mermas||m.traspasos||m.ajustes;
       const rowStyle = hayMov ? 'background:#F0FBF5' : '';
       return `<tr style="${rowStyle}">
         <td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee">${esc(p.nombre)}</td>
@@ -2368,7 +2498,7 @@ function generarPDFSemanal(data) {
         <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;color:#993C1D;font-weight:${m.salidas?'700':'400'}">${m.salidas||'—'}</td>
         <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;color:#854F0B;font-weight:${m.mermas?'700':'400'}">${m.mermas||'—'}</td>
         <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;color:#533AB7;font-weight:${m.traspasos?'700':'400'}">${m.traspasos||'—'}</td>
-        <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;font-weight:700;color:${final==='N/D'?'#888':(final<=0?'#A32D2D':'#085041')}">${final}</td>
+        <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;font-weight:700;color:${final==='N/D'?'#888':(final<=0?'#A32D2D':'#085041')}">${final}${m.ajustes?`<br><span style="font-size:9px;color:#854F0B;font-weight:400">incl. ajuste conteo ${m.ajustes>0?'+':''}${m.ajustes}</span>`:''}</td>
         <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;color:#666">${finalLitrosTxt}</td>
       </tr>`;
     }).join('');
