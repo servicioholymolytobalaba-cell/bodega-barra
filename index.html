@@ -450,6 +450,43 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
     </div>
   </div>
 
+  <!-- CONTEO POR ÁREA: cierre de barra (bartender), menaje (garzón); el
+       encargado cuenta cualquiera y además ve los conteos con cantidades.
+       Conteo CIEGO: la pantalla nunca muestra el conteo anterior ni el stock
+       esperado, solo quién contó y cuándo. Los ítems salen de CATALOGO_CONTEO
+       (Sheet salón): sumar uno es agregar una fila, no tocar esta pantalla. -->
+  <div id="tab-inventario" class="tab-body" style="display:none">
+    <!-- Solo encargado: además de contar, ve los conteos de todos CON cantidades -->
+    <div class="ped-switch" id="inv-modo" style="display:none">
+      <button class="ped-tab activa" id="im-contar" onclick="setInvModo('contar')">✏️ Contar</button>
+      <button class="ped-tab" id="im-ver" onclick="setInvModo('ver')">📋 Conteos</button>
+    </div>
+    <div id="inv-vista-ver" style="display:none">
+      <div class="banner banner-ok"><i class="ti ti-list-details"></i> Inventarios registrados — últimos 30 días</div>
+      <div id="inv-hist"></div>
+    </div>
+    <div id="inv-vista-contar">
+    <div class="ped-switch" id="inv-switch" style="display:none"></div>
+    <div class="banner banner-ok">
+      <i class="ti ti-list-check"></i> <span id="inv-titulo">Conteo</span>
+    </div>
+    <div class="banner banner-warn" id="inv-aviso" style="display:none"></div>
+    <div class="cnt-progress" id="inv-progress"></div>
+    <div id="inv-items"><div class="empty">Cargando...</div></div>
+    <div class="reg-panel" id="inv-footer" style="display:none">
+      <div class="sec-lbl">Observación <span class="req-star">* obligatoria</span></div>
+      <textarea class="note-inp" id="nota-inv" maxlength="500" placeholder="Ej: cierre normal / se quebró 1 Red Bull / faltó contar X porque... (mínimo 5 letras)" oninput="actualizarBtnInv()"></textarea>
+      <div class="note-hint" id="hint-inv">Sin observación no se puede guardar.</div>
+      <button class="btn-conf teal" id="btn-inv" onclick="guardarInventario()" disabled>
+        <i class="ti ti-device-floppy"></i> Guardar conteo
+      </button>
+      <div id="sending-inv" class="sending" style="display:none">
+        <i class="ti ti-loader"></i> Guardando en Google Sheets...
+      </div>
+    </div>
+    </div>
+  </div>
+
   <!-- CONSUMO + CONTEOS (encargado) -->
   <!-- Dos vistas del mismo dato: el consumo es lo DERIVADO de los conteos, y
        "Conteos" son los conteos tal como quedaron registrados. Antes solo se
@@ -585,6 +622,7 @@ const TABS_POR_ROL={
     {id:'registro',label:'Registro',icon:'ti-edit'},
     {id:'reque',label:'Requerim.',icon:'ti-inbox',badge:true},
     {id:'conteo',label:'Conteo',icon:'ti-clipboard-check'},
+    {id:'inventario',label:'Inventario',icon:'ti-list-check'},
     {id:'consumo',label:'Consumo',icon:'ti-trending-down'},
     {id:'stock',label:'Stock',icon:'ti-chart-bar'},
     {id:'pedidos',label:'Pedidos',icon:'ti-shopping-cart'},
@@ -593,11 +631,13 @@ const TABS_POR_ROL={
   bartender:[
     {id:'registro',label:'Registro',icon:'ti-edit'},
     {id:'reque',label:'Requerir',icon:'ti-send'},
+    {id:'inventario',label:'Conteo',icon:'ti-list-check'},
     {id:'pedidos',label:'Pedidos',icon:'ti-shopping-cart'},
     {id:'historial',label:'Historial',icon:'ti-list'}
   ],
   garzon:[
-    {id:'conteo',label:'Conteo',icon:'ti-clipboard-check'}
+    {id:'conteo',label:'Conteo',icon:'ti-clipboard-check'},
+    {id:'inventario',label:'Menaje',icon:'ti-list-check'}   // se oculta si el menaje aún no tiene ítems
   ]
 };
 
@@ -610,6 +650,11 @@ let SEMANA_ACTUAL='S27';
 let SALON={maestro:[],ultimo:{},entradasPost:{}};   // módulo salón (accion=salon)
 let REQS=[];             // requerimientos
 let PED=[];              // pedidos barra
+// Inventario por área (barra, menaje…): catálogo + metadatos del último conteo.
+// Nunca trae cantidades anteriores (conteo ciego).
+let INV={areas:[]}, invCargado=false, invArea=null;
+// Historial con cantidades (solo encargado)
+let INVH=null, invhCargado=false, invhAbierto={}, invModo='contar';
 let reqPend=0;
 
 // ---------- DATOS DEMO ----------
@@ -639,12 +684,34 @@ function demoData(){
     {folio:'R-0011',fecha:'09/07',hora:'17:05',producto:'Gin Beefeater',cantidad:2,unidad:'botella',solicitante:'Demo Bartender',estado:'APROBADO',resueltoPor:'Demo Encargado',folioMovimiento:'S-0087',motivo:'Reposición estación 2'}
   ];
   PED=[{categoria:'Gin',nombre:'Gin Beefeater',unidad:'botella',stockActual:0,minimo:2,maximo:6,pedidoSugerido:6}];
+  // Las áreas del demo se sirven filtradas por rol desde demoPost (como el servidor)
+  DEMO_INV_AREAS=[
+    {area:'BARRA',titulo:'Conteo de cierre de barra',cadaDias:1,toca:true,diasDesde:1,
+     ultimo:{folio:'CB-0001',fecha:'19/11',hora:'23:50',responsable:'Demo Bartender'},
+     items:[['Kross Stout','botella'],['Heineken Sin Alcohol','lata'],['Red Bull','lata'],['Red Bull Tropical','lata'],
+            ['Ginger Beer','botella'],['Thomas Pomelo','botella'],['Thomas Tónica','botella'],['Café (cápsulas)','cápsula']]
+            .map((x,i)=>({item:x[0],unidad:x[1],unidPorCaja:x[2]||null,orden:i+1}))},
+    {area:'MENAJE',titulo:'Conteo de menaje',cadaDias:15,toca:false,diasDesde:6,
+     ultimo:{folio:'CM-0001',fecha:'14/11',hora:'16:00',responsable:'Demo Encargado'},
+     items:['Cuchillo','Tenedor','Cucharilla Postre','Cenicero'].map((x,i)=>({item:x,unidad:'unidad',unidPorCaja:null,orden:i+1}))}
+  ];
 }
+let DEMO_INV_AREAS=[];
 function demoPost(payload){
   if(payload.op==='informe')return {status:'ok',semana:SEMANA_ACTUAL,fechas:'',movimientos:[],bases:{}};
+  // Demo: cada rol ve solo sus áreas (barra = bartender, menaje = garzón; encargado ambas)
+  if(payload.op==='leer'&&payload.que==='conteoAreas'){
+    const rolesArea={BARRA:['bartender','encargado'],MENAJE:['garzon','encargado']};
+    return {status:'ok',areas:DEMO_INV_AREAS.filter(a=>(rolesArea[a.area]||[]).includes(usr&&usr.rol))};
+  }
+  if(payload.op==='conteosAreaHist')return {status:'ok',dias:30,conteos:[
+    {folio:'CB-0002',area:'BARRA',titulo:'Conteo de cierre de barra',fecha:'2026-11-20',hora:'23:55',responsable:'Demo Bartender',obs:'Cierre normal',
+     items:[{item:'Kross Stout',cajas:null,sueltas:3,total:3},{item:'Red Bull Tropical',cajas:null,sueltas:6,total:6},{item:'Café (cápsulas)',cajas:null,sueltas:24,total:24}]},
+    {folio:'CM-0001',area:'MENAJE',titulo:'Conteo de menaje',fecha:'2026-11-14',hora:'16:00',responsable:'Demo Garzón',obs:'Conteo quincenal',
+     items:[{item:'Tenedor',cajas:null,sueltas:96,total:96}]}]};
   if(payload.op==='panel'||payload.op==='leer')return {status:'ok'};
   demoFolio++;
-  const pref={crearReq:'R',conteoSalon:'CD',entradaSalon:'E'}[payload.op]||({salida:'S',entrada:'E',merma:'M',traspaso:'T',correccion:'C'}[payload.tipo]||'X');
+  const pref={crearReq:'R',conteoSalon:'CD',entradaSalon:'E',conteoArea:(payload.area==='MENAJE'?'CM':'CB')}[payload.op]||({salida:'S',entrada:'E',merma:'M',traspaso:'T',correccion:'C'}[payload.tipo]||'X');
   const folio=pref+'-0'+demoFolio;
   if(payload.op==='resolverReq'){
     const req=REQS.find(r=>r.folio===payload.folioReq);
@@ -788,6 +855,7 @@ function aplicarPanel(p){
     consumoCargado=true;
   }
   if(p.pedidos&&p.pedidos.status==='ok'){PED=p.pedidos.pedidos||[];pedCargado=true;}
+  if(p.conteoAreas&&p.conteoAreas.status==='ok'){INV.areas=p.conteoAreas.areas||[];invCargado=true;}
 }
 
 // El badge de requerimientos se refresca solo cada 75 s mientras haya
@@ -810,6 +878,17 @@ function logout(){
   salonCargado=false;pedCargado=false;consumoCargado=false;sel=null;selReq=null;
   PEDSAL=null;pedsalCargado=false;HIST=null;histCargado=false;
   CONTEOS=null;conteosCargado=false;chAbierto={};
+  INV={areas:[]};invCargado=false;invArea=null;
+  INVH=null;invhCargado=false;invhAbierto={};invModo='contar';
+  document.getElementById('inv-hist').innerHTML='';
+  document.getElementById('inv-items').innerHTML='';   // los números de uno no quedan para el siguiente
+  document.getElementById('nota-inv').value='';
+  document.getElementById('inv-aviso').style.display='none';
+  document.getElementById('inv-footer').style.display='none';
+  document.getElementById('inv-progress').textContent='';
+  document.getElementById('inv-switch').innerHTML='';
+  document.getElementById('inv-titulo').textContent='Conteo';
+  invhCargadoEn=0;
   SALON={maestro:[],ultimo:{},entradasPost:{}};
   clearInterval(pollBadge);
   document.getElementById('sel-usr').value='';
@@ -822,17 +901,20 @@ function logout(){
 
 // ---------- NAV POR ROL ----------
 function buildNav(){
-  const tabs=TABS_POR_ROL[usr.rol]||TABS_POR_ROL.garzon;
+  // Al garzón la pestaña de inventario (menaje) solo le aparece si su área ya
+  // tiene ítems cargados: una pestaña vacía en la app del salón solo confunde.
+  const tabs=(TABS_POR_ROL[usr.rol]||TABS_POR_ROL.garzon)
+    .filter(t=>!(t.id==='inventario'&&usr.rol==='garzon'&&invCargado&&!INV.areas.length));
   document.getElementById('nav-tabs').innerHTML=tabs.map(t=>
     `<button class="nav-tab" id="navtab-${t.id}" onclick="goTab('${t.id}')">
-      <i class="ti ${t.icon}"></i> ${t.label}${t.badge?'<span class="nav-badge" id="req-badge" style="display:none">0</span>':''}
+      <i class="ti ${t.icon}"></i> ${t.label}${t.id==='inventario'&&INV.areas.some(a=>a.toca)?' •':''}${t.badge?'<span class="nav-badge" id="req-badge" style="display:none">0</span>':''}
     </button>`
   ).join('');
 }
 
 let salonCargado=false, pedCargado=false, consumoCargado=false;
 function goTab(t){
-  ['registro','reque','conteo','consumo','historial','stock','pedidos'].forEach(id=>{
+  ['registro','reque','conteo','inventario','consumo','historial','stock','pedidos'].forEach(id=>{
     const el=document.getElementById('tab-'+id);
     if(el)el.style.display=id===t?'block':'none';
     const nb=document.getElementById('navtab-'+id);
@@ -844,6 +926,16 @@ function goTab(t){
     // al paseo por otras pestañas.
     if(!salonCargado)cargarSalon();
     else if(!document.getElementById('cnt-bebidas').querySelector('.cnt-inp'))renderConteo();
+  }
+  if(t==='inventario'){
+    const esEnc=usr.rol==='encargado';
+    document.getElementById('inv-modo').style.display=esEnc?'grid':'none';
+    if(!esEnc)invModo='contar';
+    setInvModo(invModo);
+    // Igual que el conteo del salón: un inventario a medio llenar sobrevive
+    // al paseo por otras pestañas.
+    if(!invCargado)cargarInventario();
+    else if(!document.getElementById('inv-items').querySelector('.cnt-inp'))renderInventario();
   }
   if(t==='stock'&&!salonCargado)cargarSalon().then(()=>renderStk()); // visión total: barra + salón
   if(t==='consumo'){consumoCargado?renderConsumo():cargarConsumo();}
@@ -1320,6 +1412,224 @@ async function guardarConteo(){
   }else{
     // Los números siguen en pantalla: se puede reintentar sin recontar
     document.getElementById('btn-cnt').disabled=false;
+    toast(msgErr||'No se pudo guardar — tus números siguen aquí, reintenta','err');
+  }
+}
+
+// ============================================================
+// INVENTARIO POR ÁREA (cierre de barra, menaje…) — conteo ciego
+// ============================================================
+async function cargarInventario(){
+  document.getElementById('inv-items').innerHTML='<div class="empty">Cargando...</div>';
+  try{
+    const d=await postOp({op:'leer',que:'conteoAreas'});
+    if(d.status!=='ok')throw new Error(d.msg||'Error');
+    INV.areas=d.areas||[];invCargado=true;
+    renderInventario();
+    if(usr&&usr.rol==='garzon')buildNav();   // quita o marca la pestaña Menaje según lo que llegó
+  }catch(e){
+    document.getElementById('inv-items').innerHTML='<div class="empty">No se pudo cargar.<br><button class="retry-btn" onclick="cargarInventario()">↻ Reintentar</button></div>';
+  }
+}
+
+// Encargado: "Contar" (igual que el bartender/garzón) o "Conteos" (lo que
+// contaron todos, con cantidades — como el historial de bebidas).
+function setInvModo(m){
+  if(m==='ver'&&(!usr||usr.rol!=='encargado'))m='contar';
+  invModo=m;
+  const ver=m==='ver';
+  document.getElementById('inv-vista-ver').style.display=ver?'block':'none';
+  document.getElementById('inv-vista-contar').style.display=ver?'none':'block';
+  document.getElementById('im-contar').classList.toggle('activa',!ver);
+  document.getElementById('im-ver').classList.toggle('activa',ver);
+  // Lo cuentan otros desde otros celulares: si la lista tiene más de 1 minuto,
+  // se recarga al volver a mirarla.
+  if(ver&&(!invhCargado||Date.now()-invhCargadoEn>60000))cargarInvHist();
+}
+let invhCargadoEn=0;
+
+async function cargarInvHist(){
+  const el=document.getElementById('inv-hist');
+  el.innerHTML='<div class="empty"><i class="ti ti-loader spin"></i> Cargando conteos...</div>';
+  try{
+    const d=await postOp({op:'conteosAreaHist'});
+    if(d.status!=='ok')throw new Error(d.msg||'Error');
+    INVH=d;invhCargado=true;invhCargadoEn=Date.now();
+    if(d.conteos&&d.conteos.length)invhAbierto[d.conteos[0].folio]=true;
+    renderInvHist();
+  }catch(e){
+    el.innerHTML='<div class="empty">No se pudo cargar.<br><button class="retry-btn" onclick="cargarInvHist()">↻ Reintentar</button></div>';
+  }
+}
+
+function invhToggle(folio){invhAbierto[folio]=!invhAbierto[folio];renderInvHist();}
+
+function renderInvHist(){
+  const el=document.getElementById('inv-hist');
+  const cs=(INVH&&INVH.conteos)||[];
+  if(!cs.length){el.innerHTML='<div class="empty">Todavía no hay inventarios registrados en los últimos '+((INVH&&INVH.dias)||30)+' días.</div>';return;}
+  // Un segundo conteo de la misma área el mismo día es un RECUENTO (vale el último).
+  const primera={};
+  cs.forEach(c=>{const k=c.area+'|'+c.fecha;const h=String(c.hora||'');if(primera[k]===undefined||h<primera[k])primera[k]=h;});
+  el.innerHTML=cs.map(c=>{
+    const esRecuento=String(c.hora||'')>primera[c.area+'|'+c.fecha];
+    const abierto=!!invhAbierto[c.folio];
+    let h=`<div class="ch-card">
+      <div class="ch-head" data-folio="${esc(c.folio)}" onclick="invhToggle(this.dataset.folio)">
+        <div style="min-width:0">
+          <div class="ch-fecha">${/^\d{4}-\d{2}-\d{2}$/.test(c.fecha)?dLargo(c.fecha):esc(c.fecha)}${esRecuento?'<span class="ch-recuento">recuento</span>':''}</div>
+          <div class="ch-meta">${esc(c.titulo)} · ${c.hora?esc(c.hora)+' · ':''}${esc(c.responsable||'—')} · ${esc(c.folio)}</div>
+        </div>
+        <div class="ch-tot">${c.items.length}<span>ítems</span></div>
+      </div>`;
+    if(abierto){
+      h+='<div class="ch-body">'+c.items.map(i=>{
+        const det=i.cajas?`<span class="d">${nf(i.cajas)} caja(s) + ${nf(i.sueltas)} sueltas</span>`:'';
+        return `<div class="ch-row"><span>${esc(i.item)}${det?'<br>'+det:''}</span><b>${nf(i.total)}</b></div>`;
+      }).join('');
+      if(c.obs)h+=`<div style="font-size:10.5px;color:var(--text3);margin-top:8px;line-height:1.4"><b>Observación:</b> ${esc(c.obs)}</div>`;
+      h+='</div>';
+    }
+    return h+'</div>';
+  }).join('');
+}
+
+function areaInvActual(){
+  if(!INV.areas.length)return null;
+  // Por defecto abre el área a la que le toca conteo (la barra, todos los días).
+  if(!invArea||!INV.areas.some(a=>a.area===invArea)){
+    const tocaA=INV.areas.find(a=>a.toca);
+    invArea=(tocaA||INV.areas[0]).area;
+  }
+  return INV.areas.find(a=>a.area===invArea);
+}
+
+function setInvArea(area){
+  if(area===invArea)return;
+  const hay=[...document.querySelectorAll('#inv-items .cnt-inp')].some(i=>i.value!=='');
+  if(hay&&!confirm('Tienes números sin guardar en este inventario. ¿Cambiar de área y perderlos?'))return;
+  invArea=area;renderInventario();
+}
+
+function renderInventario(){
+  const a=areaInvActual();
+  const sw=document.getElementById('inv-switch');
+  if(!a){
+    sw.style.display='none';
+    document.getElementById('inv-titulo').textContent='Conteo';
+    document.getElementById('inv-aviso').style.display='none';
+    document.getElementById('inv-progress').textContent='';
+    document.getElementById('inv-items').innerHTML='<div class="empty">No hay conteos configurados para tu rol.</div>';
+    document.getElementById('inv-footer').style.display='none';
+    return;
+  }
+  sw.style.display=INV.areas.length>1?'grid':'none';
+  sw.innerHTML=INV.areas.map(x=>`<button class="ped-tab${x.area===a.area?' activa':''}" data-area="${esc(x.area)}" onclick="setInvArea(this.dataset.area)">${esc((t=>t.charAt(0).toUpperCase()+t.slice(1))(x.titulo.replace(/^Inventario de |^Conteo de /,'')))}${x.toca?' •':''}</button>`).join('');
+  document.getElementById('inv-titulo').textContent=a.titulo;
+  // Solo quién y cuándo: nunca la cantidad anterior (conteo ciego).
+  const aviso=document.getElementById('inv-aviso');
+  const cada=a.cadaDias===1?'todos los días':`cada ${a.cadaDias} días`;
+  if(a.ultimo){
+    const cuando=a.diasDesde==null?'':a.diasDesde===0?' (hoy)':a.diasDesde===1?' (ayer)':` (hace ${a.diasDesde} días)`;
+    aviso.innerHTML=`<i class="ti ti-info-circle"></i> Se cuenta ${cada}. Último: ${esc(a.ultimo.fecha)} ${esc(a.ultimo.hora)} por ${esc(a.ultimo.responsable)}${cuando}`+(a.diasDesde===0?' — si guardas otro hoy, queda como recuento y vale el último':'');
+  }else{
+    aviso.innerHTML=`<i class="ti ti-info-circle"></i> Se cuenta ${cada}. Todavía no hay ningún conteo registrado.`;
+  }
+  aviso.style.display='flex';
+  document.getElementById('inv-items').innerHTML=a.items.map((it,i)=>{
+    const conCajas=!!it.unidPorCaja;
+    return `<div class="cnt-card">
+      <div class="cnt-head">
+        <span class="cnt-name">${esc(it.item)}</span>
+        <span class="cnt-prev">${conCajas?`caja de ${it.unidPorCaja}`:esc(it.unidad)}</span>
+      </div>
+      <div class="cnt-inputs${conCajas?'':' solo'}">
+        ${conCajas?`<div><div class="cnt-lbl">Cajas cerradas</div><input type="number" inputmode="numeric" min="0" step="1" class="cnt-inp" id="inv-c-${i}" oninput="updInv(${i})"></div>`:''}
+        <div><div class="cnt-lbl">${conCajas?'Sueltas':(it.unidad&&it.unidad!=='unidad'?'Unidades ('+esc(it.unidad)+')':'Unidades')}</div><input type="number" inputmode="numeric" min="0" step="1" class="cnt-inp" id="inv-s-${i}" oninput="updInv(${i})"></div>
+        <div><div class="cnt-lbl">Total</div><div class="cnt-total" id="inv-t-${i}">—</div></div>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('inv-footer').style.display='block';
+  updProgresoInv();
+}
+
+function updInv(i){
+  const a=areaInvActual();if(!a)return;
+  const it=a.items[i];
+  const cEl=document.getElementById('inv-c-'+i), sEl=document.getElementById('inv-s-'+i);
+  const c=cEl?parseInt(cEl.value):NaN, s=parseInt(sEl.value);
+  const hay=(cEl&&cEl.value!=='')||sEl.value!=='';
+  document.getElementById('inv-t-'+i).textContent=hay?((isNaN(c)?0:c)*(it.unidPorCaja||0)+(isNaN(s)?0:s)):'—';
+  if(cEl)cEl.classList.toggle('done',hay);
+  sEl.classList.toggle('done',hay);
+  updProgresoInv();
+}
+
+// Lee la pantalla. Un ítem vacío NO es cero: el 0 hay que escribirlo, para
+// distinguir "no hay" de "se me pasó contar".
+function leerInventario(){
+  const a=areaInvActual();
+  const items=[],faltantes=[],invalidos=[];
+  if(!a)return {items,faltantes,invalidos};
+  a.items.forEach((it,i)=>{
+    const cEl=document.getElementById('inv-c-'+i), sEl=document.getElementById('inv-s-'+i);
+    if(!sEl)return;
+    const cTxt=cEl?cEl.value.trim():'', sTxt=sEl.value.trim();
+    if(cTxt===''&&sTxt===''){faltantes.push(it.item);return;}
+    const c=cTxt===''?0:Number(cTxt), s=sTxt===''?0:Number(sTxt);
+    if(!Number.isInteger(c)||!Number.isInteger(s)||c<0||s<0){invalidos.push(it.item);return;}
+    items.push({item:it.item,cajas:cEl?c:'',sueltas:s});
+  });
+  return {items,faltantes,invalidos};
+}
+
+function updProgresoInv(){
+  const a=areaInvActual();if(!a)return;
+  const {items,faltantes,invalidos}=leerInventario();
+  let txt=`${items.length} de ${a.items.length} contados`;
+  if(faltantes.length)txt+=' · faltan: '+faltantes.slice(0,3).join(', ')+(faltantes.length>3?'…':'');
+  if(invalidos.length)txt+=' · revisa: '+invalidos.join(', ')+' (solo enteros)';
+  document.getElementById('inv-progress').textContent=txt;
+  actualizarBtnInv();
+}
+
+// El inventario se guarda COMPLETO o no se guarda: un ítem sin contar deja el
+// cruce con las ventas sin base y se confunde con pérdida.
+function actualizarBtnInv(){
+  const inp=document.getElementById('nota-inv'), hint=document.getElementById('hint-inv');
+  const okObs=obsValida(inp.value);
+  inp.classList.toggle('invalid',!okObs&&inp.value.length>0);
+  hint.classList.toggle('bad',!okObs&&inp.value.length>0);
+  hint.textContent=okObs?'✓ Observación válida':`Faltan ${Math.max(0,OBS_MIN-inp.value.trim().length)} letras — sin observación no se puede guardar.`;
+  const {faltantes,invalidos,items}=leerInventario();
+  document.getElementById('btn-inv').disabled=!(items.length>0&&!faltantes.length&&!invalidos.length&&okObs);
+}
+
+async function guardarInventario(){
+  const a=areaInvActual();if(!a)return;
+  const {items,faltantes,invalidos}=leerInventario();
+  const obs=document.getElementById('nota-inv').value.trim();
+  if(faltantes.length){toast('Faltan por contar: '+faltantes.join(', ')+' (si no hay, escribe 0)','err');return;}
+  if(invalidos.length){toast('Revisa: '+invalidos.join(', ')+' — solo números enteros','err');return;}
+  if(!obsValida(obs)){toast('La observación es obligatoria','err');return;}
+  document.getElementById('btn-inv').disabled=true;
+  document.getElementById('sending-inv').style.display='flex';
+  let ok=false,folio='',msgErr='';
+  try{
+    const j=await postOp({op:'conteoArea',area:a.area,items,observacion:obs});
+    ok=j.status==='ok';folio=j.folio||'';msgErr=j.msg||'';
+  }catch(e){ok=false;}
+  document.getElementById('sending-inv').style.display='none';
+  if(ok){
+    toast(`${folio} · ${a.titulo} guardado (${items.length} ítems)`,'ok');
+    a.toca=false;buildNav();goTab('inventario');   // quita el "•" de pendiente
+    document.getElementById('nota-inv').value='';
+    invCargado=false;invhCargado=false;   // el historial del encargado cambió
+    cargarInventario();   // refresca "último conteo" y limpia los números
+  }else{
+    // Los números siguen en pantalla: se puede reintentar sin recontar
+    actualizarBtnInv();
     toast(msgErr||'No se pudo guardar — tus números siguen aquí, reintenta','err');
   }
 }
