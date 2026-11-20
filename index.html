@@ -72,6 +72,8 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
 .cat-scroll::-webkit-scrollbar{display:none}
 .chip{flex-shrink:0;padding:6px 13px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:12px;color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:500}
 .chip.active{background:var(--teal);border-color:var(--teal);color:#fff}
+.bod-fams{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.bod-fam{cursor:pointer;margin:0}.bod-fam:active{border-color:var(--teal)}
 
 /* SEARCH */
 .search-wrap{position:relative;margin:10px 0 6px}
@@ -496,8 +498,9 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
     <div class="cnt-progress">Cuenta solo los productos que quieras. Al guardar, el kardex queda igual a lo contado y las salidas siguen descontando desde ahí.</div>
     <div class="search-wrap">
       <i class="ti ti-search s-ico"></i>
-      <input type="text" id="bod-srch" placeholder="Buscar producto o categoría..." oninput="renderBodega()">
+      <input type="text" id="bod-srch" placeholder="Buscar producto o familia..." oninput="renderBodega()">
     </div>
+    <div class="cat-scroll" id="bod-cats"></div>
     <div class="cnt-progress" id="bod-progress"></div>
     <div id="bod-list"></div>
     <div class="reg-panel" id="bod-footer">
@@ -914,7 +917,7 @@ function logout(){
   CONTEOS=null;conteosCargado=false;chAbierto={};
   INV={areas:[]};invCargado=false;invArea=null;
   INVH=null;invhCargado=false;invhAbierto={};invModo='contar';
-  PUEDE_BODEGA=false;BOD={};
+  PUEDE_BODEGA=false;BOD={};bodCat='';
   document.getElementById('bod-list').innerHTML='';document.getElementById('bod-result').innerHTML='';document.getElementById('nota-bod').value='';
   document.getElementById('inv-hist').innerHTML='';
   document.getElementById('inv-items').innerHTML='';   // los números de uno no quedan para el siguiente
@@ -1117,7 +1120,16 @@ async function confirmar(){
   const payload={producto:p.nombre,tipo,cantidad:qty,unidad:p.unidad,turno,observacion:nota};
   let syncOk=false,folio='',msgErr='';
   try{
-    const j=await postOp(payload);
+    let j=await postOp(payload);
+    // Posible duplicado: alguien (o tú mismo) ya registró lo mismo hace poco.
+    // Se pregunta antes de grabar; solo se registra si es otro movimiento.
+    if(j.status==='posible_duplicado'){
+      if(confirm('⚠️ Posible duplicado\n\n'+(j.msg||'Ya se registró este movimiento hace poco')+'.\n\n¿Es OTRO movimiento distinto y quieres registrarlo igual?')){
+        j=await postOp({...payload,confirmarDuplicado:true});
+      }else{
+        j={status:'cancelado',msg:'No se registró: era el mismo movimiento'};
+      }
+    }
     syncOk=j.status==='ok';folio=j.folio||'';msgErr=j.msg||'';
   }catch(e){syncOk=false;}
   document.getElementById('sending').style.display='none';
@@ -1461,9 +1473,27 @@ function bodNum(v){const t=String(v??'').trim().replace(',','.');return /^\d{1,4
 function renderBodega(){
   if(!PUEDE_BODEGA){document.getElementById('bod-list').innerHTML='<div class="empty">No tienes acceso a esta pantalla.</div>';return;}
   const q=(document.getElementById('bod-srch').value||'').toLowerCase();
-  const lista=stk.filter(p=>!q||p.nombre.toLowerCase().includes(q)||String(p.cat).toLowerCase().includes(q));
   const el=document.getElementById('bod-list');
   if(!stk.length){el.innerHTML='<div class="empty">Cargando stock...</div>';return;}
+  // Familias (categorías del kardex) en el orden del Sheet, con su avance.
+  const fams=[...new Set(stk.map(p=>p.cat))];
+  const avance=c=>{const ps=stk.filter(p=>p.cat===c);const cont=ps.filter(p=>BOD[p.nombre]!==undefined);
+    const dif=cont.filter(p=>{const n=bodNum(BOD[p.nombre]);return n!==null&&Math.round((n-p.s)*1000)!==0;}).length;
+    return {total:ps.length,cont:cont.length,dif};};
+  if(bodCat&&!fams.includes(bodCat))bodCat='';
+  document.getElementById('bod-cats').innerHTML=
+    `<div class="chip${!bodCat?' active':''}" data-cat="" onclick="setBodCat(this.dataset.cat)">☰ Familias</div>`+
+    fams.map(c=>{const a=avance(c);return `<div class="chip${bodCat===c?' active':''}" data-cat="${esc(c)}" onclick="setBodCat(this.dataset.cat)">${esc(c)}${a.cont?` · ${a.cont}/${a.total}`:''}</div>`;}).join('');
+  // Sin búsqueda ni familia elegida: vista de familias para entrar rápido.
+  if(!q&&!bodCat){
+    el.innerHTML=`<div class="bod-fams">`+fams.map(c=>{const a=avance(c);
+      return `<div class="cnt-card bod-fam" data-cat="${esc(c)}" onclick="setBodCat(this.dataset.cat)">
+        <div class="cnt-name">${esc(c)}</div>
+        <div class="cnt-prev">${a.total} producto(s)${a.cont?` · <b>${a.cont} contados</b>`:''}${a.dif?` · <span style="color:var(--coral)">${a.dif} con diferencia</span>`:''}</div></div>`;}).join('')+`</div>`;
+    updBodProgreso();
+    return;
+  }
+  const lista=stk.filter(p=>q?(p.nombre.toLowerCase().includes(q)||String(p.cat).toLowerCase().includes(q)):p.cat===bodCat);
   if(!lista.length){el.innerHTML='<div class="empty">Sin resultados</div>';updBodProgreso();return;}
   let cat=null;
   el.innerHTML=lista.map(p=>{
@@ -1475,6 +1505,13 @@ function renderBodega(){
       <div><div class="cnt-lbl">Kardex → diferencia</div><div class="cnt-total" id="bod-d-${i}">${bodDifTxt(p)}</div></div></div></div>`;
   }).join('');
   updBodProgreso();
+}
+let bodCat='';   // '' = vista de familias
+function setBodCat(c){
+  bodCat=c||'';
+  document.getElementById('bod-srch').value='';
+  renderBodega();
+  document.getElementById('tab-bodega').scrollIntoView({block:'start'});
 }
 // El kardex recién aparece cuando ya hay un número escrito: así no influye el conteo.
 function bodDifTxt(p){
