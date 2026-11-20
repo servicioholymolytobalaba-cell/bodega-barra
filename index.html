@@ -341,7 +341,7 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
         <span class="qty-unit" id="qty-u">und.</span>
       </div>
       <div class="sec-lbl">Observación <span class="req-star">* obligatoria</span></div>
-      <textarea class="note-inp" id="nota" placeholder="Motivo del movimiento (mínimo 5 letras)..." oninput="valNota('nota','nota-hint','btn-conf')"></textarea>
+      <textarea class="note-inp" id="nota" maxlength="500" placeholder="Motivo del movimiento (mínimo 5 letras)..." oninput="valNota('nota','nota-hint','btn-conf')"></textarea>
       <div class="note-hint" id="nota-hint">Sin observación no se puede registrar.</div>
       <button class="btn-conf salida" id="btn-conf" onclick="confirmar()" disabled>
         <i class="ti ti-check"></i> Confirmar salida
@@ -373,7 +373,7 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
           <span class="qty-unit" id="qty-u-req">und.</span>
         </div>
         <div class="sec-lbl">Motivo <span class="req-star">* obligatorio</span></div>
-        <textarea class="note-inp" id="nota-req" placeholder="Para qué lo necesitas (mínimo 5 letras)..." oninput="valNota('nota-req','hint-req','btn-req')"></textarea>
+        <textarea class="note-inp" id="nota-req" maxlength="500" placeholder="Para qué lo necesitas (mínimo 5 letras)..." oninput="valNota('nota-req','hint-req','btn-req')"></textarea>
         <div class="note-hint" id="hint-req">Sin motivo no se puede enviar.</div>
         <button class="btn-conf teal" id="btn-req" onclick="enviarReq()" disabled>
           <i class="ti ti-send"></i> Enviar requerimiento
@@ -422,7 +422,7 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
           <span class="qty-unit">und.</span>
         </div>
         <div class="sec-lbl">Observación <span class="req-star">* obligatoria</span></div>
-        <textarea class="note-inp" id="nota-ent" placeholder="Ej: pedido semanal proveedor X, guía N°... (mínimo 5 letras)" oninput="valNota('nota-ent','hint-ent','btn-ent')"></textarea>
+        <textarea class="note-inp" id="nota-ent" maxlength="500" placeholder="Ej: pedido semanal proveedor X, guía N°... (mínimo 5 letras)" oninput="valNota('nota-ent','hint-ent','btn-ent')"></textarea>
         <div class="note-hint" id="hint-ent">Sin observación no se puede registrar.</div>
         <button class="btn-conf entrada" id="btn-ent" onclick="guardarEntradaSalon()" disabled>
           <i class="ti ti-arrow-down"></i> Registrar entrada
@@ -439,7 +439,7 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
     <div id="cnt-cubiertos"></div>
     <div class="reg-panel" id="cnt-footer" style="display:none">
       <div class="sec-lbl">Observación <span class="req-star">* obligatoria</span></div>
-      <textarea class="note-inp" id="nota-cnt" placeholder="Ej: conteo normal de apertura / faltó contar X porque... (mínimo 5 letras)" oninput="valNota('nota-cnt','hint-cnt','btn-cnt')"></textarea>
+      <textarea class="note-inp" id="nota-cnt" maxlength="500" placeholder="Ej: conteo normal de apertura / faltó contar X porque... (mínimo 5 letras)" oninput="valNota('nota-cnt','hint-cnt','btn-cnt')"></textarea>
       <div class="note-hint" id="hint-cnt">Sin observación no se puede guardar.</div>
       <button class="btn-conf teal" id="btn-cnt" onclick="guardarConteo()" disabled>
         <i class="ti ti-device-floppy"></i> Guardar conteo del día
@@ -739,7 +739,7 @@ async function cargarDatosIniciales(){
     const rUsr=await fetch(SCRIPT_URL+"?accion=usuarios");
     const dUsr=await rUsr.json();
     if(dUsr.status==='ok'){
-      USUARIOS_APP=dUsr.usuarios; // solo {nombre, rol} — los PINs nunca llegan al navegador
+      USUARIOS_APP=dUsr.usuarios; // solo {nombre} — ni PINs ni roles llegan al navegador antes del login
       renderNombresLogin();
     } else { throw new Error(dUsr.msg||'Error al leer usuarios'); }
   }catch(err){
@@ -1002,7 +1002,7 @@ function renderProds(){
     const idx=stk.indexOf(p);
     const cls=p.s===0?'s-zero':'s-ok';
     return`<div class="prod-row${sel===idx?' sel':''}" onclick="selProd(${idx})">
-      <div class="prod-name">${p.nombre}</div>
+      <div class="prod-name">${esc(p.nombre)}</div>
       <div class="prod-cat">${p.cat}</div>
       <div class="prod-stk ${cls}">${p.s} ${p.unidad}</div>
     </div>`;
@@ -1112,7 +1112,7 @@ function renderProdsReq(){
   el.innerHTML=lista.slice(0,40).map(p=>{
     const idx=stk.indexOf(p);
     return`<div class="prod-row${selReq===idx?' sel':''}" onclick="selProdReq(${idx})">
-      <div class="prod-name">${p.nombre}</div>
+      <div class="prod-name">${esc(p.nombre)}</div>
       <div class="prod-cat">${p.cat}</div>
       <div class="prod-stk ${p.s===0?'s-zero':'s-ok'}">${p.s} ${p.unidad}</div>
     </div>`;
@@ -1296,7 +1296,7 @@ function renderConteo(){
   document.getElementById('cnt-bebidas').innerHTML=bebidas.map((m,i)=>`
     <div class="cnt-card">
       <div class="cnt-head">
-        <span class="cnt-name">${m.producto}</span>
+        <span class="cnt-name">${esc(m.producto)}</span>
         <span class="cnt-prev">${prev(m.producto)}</span>
       </div>
       <div class="cnt-inputs">
@@ -1312,7 +1312,7 @@ function renderConteo(){
   document.getElementById('cnt-cubiertos').innerHTML=cubiertos.map((m,i)=>`
     <div class="cnt-card">
       <div class="cnt-head">
-        <span class="cnt-name">${m.producto}</span>
+        <span class="cnt-name">${esc(m.producto)}</span>
         <span class="cnt-prev">${prev(m.producto)}</span>
       </div>
       <div class="cnt-inputs solo">
@@ -1324,7 +1324,7 @@ function renderConteo(){
   aplicarPermisosUI();
   if(usr.rol==='encargado'){
     document.getElementById('ent-prod').innerHTML='<option value="">Selecciona producto...</option>'+
-      SALON.maestro.map(m=>`<option value="${m.producto}">${m.producto} (${m.categoria})</option>`).join('');
+      SALON.maestro.map(m=>`<option value="${esc(m.producto)}">${esc(m.producto)} (${esc(m.categoria)})</option>`).join('');
   }
   updProgreso();
 }
@@ -1803,7 +1803,7 @@ function renderConsumo(){
     html+=`<div class="stk-cat-lbl">🥤 Bebidas — consumo del día</div>`;
     html+=bebidas.map(x=>`
       <div class="stk-row">
-        <span class="stk-nombre">${x.prod}${x.entradas?`<br><span style="font-size:10px;color:var(--text3)">incluye entrada de ${x.entradas} und</span>`:''}</span>
+        <span class="stk-nombre">${esc(x.prod)}${x.entradas?`<br><span style="font-size:10px;color:var(--text3)">incluye entrada de ${x.entradas} und</span>`:''}</span>
         <span class="stk-qty ${x.consumo<0?'s-zero':'s-ok'}">${x.consumo<0?x.consumo+' ⚠️':x.consumo} und</span>
       </div>`).join('');
     html+=`<div style="font-size:10px;color:var(--text3);margin-top:6px">⚠️ Un consumo negativo indica error de conteo o entrada sin registrar.</div>`;
@@ -1812,7 +1812,7 @@ function renderConsumo(){
     html+=`<div class="stk-cat-lbl" style="margin-top:14px">🍴 Cubiertos — variación del día (merma si es positiva)</div>`;
     html+=cubiertos.map(x=>`
       <div class="stk-row">
-        <span class="stk-nombre">${x.prod}</span>
+        <span class="stk-nombre">${esc(x.prod)}</span>
         <span class="stk-qty ${x.consumo>0?'s-zero':'s-ok'}">${x.consumo>0?'−'+x.consumo:x.consumo===0?'sin pérdida ✓':'+'+(-x.consumo)}</span>
       </div>`).join('');
   }
@@ -1935,7 +1935,7 @@ function renderStk(){
          (e?` <span style="color:var(--green);font-weight:700">+ ${e.cantidad} recibidas</span>`:'')
         :'';
       return`<div class="stk-row">
-        <span class="stk-nombre">${m.producto}${u?`<br><span style="font-size:10px;color:var(--text3)">${detalle}</span>`:''}</span>
+        <span class="stk-nombre">${esc(m.producto)}${u?`<br><span style="font-size:10px;color:var(--text3)">${detalle}</span>`:''}</span>
         <span class="stk-qty ${u?(disp===0?'s-zero':'s-ok'):''}" style="${u?'':'color:var(--text3)'}">${u?disp+' und':'sin conteo'}</span>
       </div>`;}).join('');
     html+=`<div style="font-size:10px;color:var(--text3);margin-top:6px;line-height:1.4">
@@ -1947,7 +1947,7 @@ function renderStk(){
       const diff=(u&&b!=null)?b-u.total:null;
       const diffTxt=diff===null?'':(diff>0?` · faltan ${diff}`:diff<0?` · sobran ${-diff}`:' · completo ✓');
       return`<div class="stk-row">
-        <span class="stk-nombre">${m.producto}<br><span style="font-size:10px;color:var(--text3)">Base: ${b??'—'}${u?' · Últ: '+u.total+' ('+u.fecha+')':''}</span></span>
+        <span class="stk-nombre">${esc(m.producto)}<br><span style="font-size:10px;color:var(--text3)">Base: ${b??'—'}${u?' · Últ: '+u.total+' ('+u.fecha+')':''}</span></span>
         <span class="stk-qty ${diff>0?'s-zero':'s-ok'}" style="${u?'':'color:var(--text3)'}">${u?u.total+diffTxt:'sin conteo'}</span>
       </div>`;}).join('');
   }
@@ -1957,7 +1957,7 @@ function renderStk(){
     <div class="stk-cat-lbl">${c}</div>
     ${stk.filter(p=>p.cat===c).map(p=>`
       <div class="stk-row">
-        <span class="stk-nombre">${p.nombre}</span>
+        <span class="stk-nombre">${esc(p.nombre)}</span>
         <span class="stk-qty ${p.s===0?'s-zero':'s-ok'}">${p.s} ${p.unidad}</span>
       </div>`).join('')}`).join('');
   document.getElementById('stk-list').innerHTML=html;
@@ -2361,7 +2361,7 @@ function generarPDFSemanal(data) {
       const hayMov = m.entradas||m.salidas||m.mermas||m.traspasos;
       const rowStyle = hayMov ? 'background:#F0FBF5' : '';
       return `<tr style="${rowStyle}">
-        <td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee">${p.nombre}</td>
+        <td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee">${esc(p.nombre)}</td>
         <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee">${p.unidad}</td>
         <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;font-weight:600;color:#0000CC">${baseTxt}</td>
         <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;color:#3B6D11;font-weight:${m.entradas?'700':'400'}">${m.entradas||'—'}</td>
@@ -2433,7 +2433,7 @@ function generarPDFSemanal(data) {
     const filasB=beb.map(b=>{
       const neg=b.consumo<0;
       return `<tr style="${b.consumo?'background:#F0FBF5':''}">
-        <td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee">${b.producto}</td>
+        <td style="padding:5px 8px;font-size:11px;border-bottom:1px solid #eee">${esc(b.producto)}</td>
         <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;font-weight:600;color:#0000CC">${b.apertura==null?'N/D':b.apertura}</td>
         <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;color:#3B6D11;font-weight:${b.entradas?'700':'400'}">${b.entradas||'—'}${b.entradasSinCerrar>0?`<br><span style="font-size:8.5px;color:#6B3D06;font-weight:600">${b.entradasSinCerrar} sin cerrar</span>`:''}</td>
         <td style="padding:5px 8px;font-size:11px;text-align:center;border-bottom:1px solid #eee;font-weight:700;color:${neg?'#A32D2D':'#993C1D'}">${b.consumo}${neg?' ⚠':''}</td>
@@ -2491,7 +2491,7 @@ function generarPDFSemanal(data) {
       <div style="font-size:13px;margin-top:4px">Informe Semanal ${semana}  ·  ${fechas}</div>
       <div style="font-size:11px;margin-top:2px;opacity:.85">Barra + Bebidas del salón</div>
     </div>
-    <div style="font-size:11px;color:#888;margin-top:6px">Generado por: ${usr.nombre}  ·  ${new Date().toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
+    <div style="font-size:11px;color:#888;margin-top:6px">Generado por: ${esc(usr.nombre)}  ·  ${new Date().toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</div>
   </div>
   <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
     <div style="background:#FAECE7;border:1px solid #F5C4B3;border-radius:8px;padding:10px;text-align:center">
