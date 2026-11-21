@@ -635,12 +635,11 @@ const DEMO = ES_LOCAL && SCRIPT_URL.indexOf('http') !== 0;
 
 const CATS=["Todos","Cerveza","Vino","Ron","Pisco","Whisky","Whiskey","Tequila","Mezcal","Gin","Vodka","Licor","Bitter","Cognac","Sin Alcohol","Bebida","Frutas","Insumos"];
 const TIPOS_ENC=[{id:"salida",label:"Salida",icon:"ti-arrow-up"},{id:"entrada",label:"Entrada",icon:"ti-arrow-down"},{id:"merma",label:"Merma",icon:"ti-alert-triangle"},{id:"traspaso",label:"Traspaso",icon:"ti-arrows-exchange"},{id:"correccion",label:"Corrección",icon:"ti-edit"}];
-// El bartender conserva la salida directa (decisión 01/08) pero SOLO salida:
-// corrección y traspaso quedan fuera de su alcance — las correcciones no
-// descuentan stock, así que serían un canal de salida invisible al inventario.
-// El servidor repite esta restricción; esto es solo la mitad visible.
-const TIPOS_POR_ROL={encargado:TIPOS_ENC,bartender:TIPOS_ENC.filter(t=>t.id==='salida')};
-function tiposDeRol(){return TIPOS_POR_ROL[usr&&usr.rol]||TIPOS_POR_ROL.bartender;}
+// Desde el 21-11-2026 SOLO el encargado registra movimientos: el bartender
+// pide por requerimiento y la salida se registra al aprobarlo. El servidor lo
+// impone (registrarMovimientoBarra exige encargado); esto es la mitad visible.
+const TIPOS_POR_ROL={encargado:TIPOS_ENC};
+function tiposDeRol(){return TIPOS_POR_ROL[usr&&usr.rol]||[];}
 const OBS_MIN=5;
 
 // Definición de pestañas por rol
@@ -657,7 +656,7 @@ const TABS_POR_ROL={
     {id:'historial',label:'Historial',icon:'ti-list'}
   ],
   bartender:[
-    {id:'registro',label:'Registro',icon:'ti-edit'},
+    // Sin pestaña Registro desde el 21-11-2026: el bartender solo pide.
     {id:'reque',label:'Requerir',icon:'ti-send'},
     {id:'inventario',label:'Conteo',icon:'ti-list-check'},
     {id:'pedidos',label:'Pedidos',icon:'ti-shopping-cart'},
@@ -866,7 +865,6 @@ async function doLogin(){
   // El historial ya no se dibuja acá: lo carga goTab desde el servidor cuando
   // se abre la pestaña, así no se paga esa lectura si nadie la mira.
   if(usr.rol==='encargado'){initCats();renderProds();renderStk();renderReqs();iniciarPollingBadge();}
-  else if(usr.rol==='bartender'){initCats();renderProds();}   // recupera el registro de salidas
 }
 
 // Vuelca la respuesta de op:'panel' al estado local
