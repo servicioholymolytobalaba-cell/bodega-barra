@@ -197,6 +197,7 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
   text-transform:uppercase;margin-right:5px;vertical-align:middle}
 .b-quiebre{background:var(--red-t);color:#fff}
 .b-critico{background:#C2410C;color:#fff}
+.b-desc{background:#E7E5E4;color:#57534E}
 .b-bajo{background:var(--amber);color:#fff}
 .b-ok{background:#E6EFEA;color:var(--teal)}
 /* Explica un "CRÍTICO" que pide 0 cajas: el problema es el par, no el stock. */
@@ -2244,7 +2245,8 @@ function renderPedidoSalon(){
     : `<div class="banner banner-warn"><i class="ti ti-alert-triangle"></i> El último conteo es del ${PEDSAL.fechaBase||'—'}, no de hoy. Conviene contar antes de pedir.</div>`;
 
   const ETI={quiebre:['QUIEBRE','b-quiebre'],critico:['CRÍTICO','b-critico'],
-             bajo:['BAJO','b-bajo'],ok:['OK','b-ok'],'sin-datos':['SIN CONTEO','b-ok']};
+             bajo:['BAJO','b-bajo'],ok:['OK','b-ok'],'sin-datos':['SIN CONTEO','b-ok'],
+             descontinuado:['DESCONTINUADO','b-desc']};
   let html='';
   PEDSAL.items.forEach((x,i)=>{
     const [txt,cls]=ETI[x.estado]||ETI.ok;
@@ -2259,6 +2261,10 @@ function renderPedidoSalon(){
     if(x.recibidoPost>0)
       sub+=` <span style="color:var(--green);font-weight:700">(${x.conteoBase} contadas + ${x.recibidoPost} recibidas)</span>`;
     if(x.enTransito>0)sub+=` · ${x.enTransito} u ya pedidas`;
+    // Descontinuado: se vende hasta agotar, nunca se pide. Se dice en la fila
+    // para que nadie lo pida "porque se está acabando".
+    if(x.estado==='descontinuado')
+      sub=(x.stock===null?'Sin conteo':`Quedan ${x.stock} u`)+' · se vende hasta agotar, no se vuelve a pedir';
     // "CRÍTICO" pidiendo 0 cajas parece un error del sistema, y no lo es: el
     // stock ya cubre el máximo definido, pero ese máximo quedó por debajo del
     // consumo real. Sin decirlo, el aviso se lee como bug y se ignora — que es
