@@ -181,7 +181,8 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
 .entrada-toggle:active{background:#f0f7f5}
 .entrada-toggle i{font-size:16px}
 .entrada-toggle.abierto{border-style:solid;background:#f0f7f5}
-/* ---- Pedido sugerido de bebidas ---- */
+.entrada-toggle.merma{border-color:var(--coral-m);color:var(--coral)}
+.entrada-toggle.merma:active,.entrada-toggle.merma.abierto{background:var(--coral-c)}/* ---- Pedido sugerido de bebidas ---- */
 .ped-switch{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
 .ped-tab{height:40px;border-radius:12px;border:1.5px solid var(--border);background:#fff;
   font-size:13px;font-weight:700;color:var(--text2);font-family:inherit;cursor:pointer}
@@ -431,6 +432,48 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
           <i class="ti ti-arrow-down"></i> Registrar entrada
         </button>
         <div id="sending-ent" class="sending" style="display:none">
+          <i class="ti ti-loader"></i> Guardando...
+        </div>
+      </div>
+    </div>
+    <!-- Merma (encargado): vencidas, rotas, cortesías. Sin esto, lo que se bota
+         aparece al día siguiente como faltante sin explicación. -->
+    <div id="cnt-merma-wrap" style="display:none">
+      <button class="entrada-toggle merma" id="mer-toggle" onclick="toggleMerma()">
+        <span><i class="ti ti-trash-x"></i> Registrar merma (vencida, rota, cortesía…)</span>
+        <i class="ti ti-chevron-down" id="mer-chevron"></i>
+      </button>
+      <div class="reg-panel" id="mer-panel" style="display:none;margin-top:6px">
+        <div class="sec-lbl">Dónde</div>
+        <div class="ped-switch">
+          <button class="ped-tab activa" id="mer-a-SALON" onclick="setMerArea('SALON')">Salón</button>
+          <button class="ped-tab" id="mer-a-BARRA" onclick="setMerArea('BARRA')">Barra</button>
+        </div>
+        <div class="sec-lbl">Producto</div>
+        <select id="mer-prod" style="margin-bottom:13px"></select>
+        <div id="mer-ubic-wrap">
+          <div class="sec-lbl">Estaba en</div>
+          <select id="mer-ubic" style="margin-bottom:13px"><option value="Bodega">Bodega</option><option value="Nevera">Nevera</option></select>
+        </div>
+        <div class="sec-lbl">Motivo</div>
+        <select id="mer-motivo" style="margin-bottom:13px">
+          <option value="">Selecciona motivo...</option>
+          <option>Vencida</option><option>Rota o dañada</option><option>Derrame</option>
+          <option>Cortesía</option><option>Consumo del personal</option><option>Otro</option>
+        </select>
+        <div class="sec-lbl">Cantidad</div>
+        <div class="qty-row">
+          <button class="qty-btn" onclick="adjQM(-1)">−</button>
+          <input type="number" inputmode="numeric" id="qty-mer" class="qty-inp" value="1" min="1">
+          <span class="qty-unit">und.</span>
+        </div>
+        <div class="sec-lbl">Observación <span class="req-star">* obligatoria</span></div>
+        <textarea class="note-inp" id="nota-mer" maxlength="500" placeholder="Ej: latas vencidas en bodega, se botan (mínimo 5 letras)" oninput="valNota('nota-mer','hint-mer','btn-mer')"></textarea>
+        <div class="note-hint" id="hint-mer">Sin observación no se puede registrar.</div>
+        <button class="btn-conf merma" id="btn-mer" onclick="guardarMerma()" disabled>
+          <i class="ti ti-trash-x"></i> Registrar merma
+        </button>
+        <div id="sending-mer" class="sending" style="display:none">
           <i class="ti ti-loader"></i> Guardando...
         </div>
       </div>
@@ -747,7 +790,7 @@ function demoPost(payload){
      items:[{item:'Tenedor',cajas:null,sueltas:96,total:96}]}]};
   if(payload.op==='panel'||payload.op==='leer')return {status:'ok'};
   demoFolio++;
-  const pref={crearReq:'R',conteoSalon:'CD',entradaSalon:'E',conteoArea:(payload.area==='MENAJE'?'CM':'CB')}[payload.op]||({salida:'S',entrada:'E',merma:'M',traspaso:'T',correccion:'C'}[payload.tipo]||'X');
+  const pref={crearReq:'R',conteoSalon:'CD',entradaSalon:'E',mermaRegistrar:'MS',conteoArea:(payload.area==='MENAJE'?'CM':'CB')}[payload.op]||({salida:'S',entrada:'E',merma:'M',traspaso:'T',correccion:'C'}[payload.tipo]||'X');
   const folio=pref+'-0'+demoFolio;
   if(payload.op==='resolverReq'){
     const req=REQS.find(r=>r.folio===payload.folioReq);
@@ -1412,6 +1455,7 @@ function renderConteo(){
   if(usr.rol==='encargado'){
     document.getElementById('ent-prod').innerHTML='<option value="">Selecciona producto...</option>'+
       SALON.maestro.map(m=>`<option value="${esc(m.producto)}">${esc(m.producto)} (${esc(m.categoria)})</option>`).join('');
+    llenarMermaProductos();
   }
   updProgreso();
 }
@@ -1427,11 +1471,11 @@ function aplicarPermisosUI(){
   const esEnc=!!usr&&usr.rol==='encargado';
   const wrap=document.getElementById('cnt-entrada-wrap');
   if(wrap)wrap.style.display=esEnc?'block':'none';
+  const wrapM=document.getElementById('cnt-merma-wrap');
+  if(wrapM)wrapM.style.display=esEnc?'block':'none';
   if(!esEnc){
-    const p=document.getElementById('ent-panel');
-    if(p)p.style.display='none';                       // que no quede desplegada
-    const b=document.getElementById('ent-toggle');
-    if(b)b.classList.remove('abierto');
+    ['ent-panel','mer-panel'].forEach(id=>{const p=document.getElementById(id);if(p)p.style.display='none';}); // que no quede desplegada
+    ['ent-toggle','mer-toggle'].forEach(id=>{const b=document.getElementById(id);if(b)b.classList.remove('abierto');});
   }
 }
 
@@ -1867,6 +1911,74 @@ async function guardarEntradaSalon(){
 }
 
 // ============================================================
+// MERMAS (encargado): salón (bebidas del MAESTRO, también las descontinuadas)
+// y barra (los ítems del conteo de cierre). Hoja MERMAS del Sheet salón.
+// ============================================================
+let merArea='SALON';
+function adjQM(d){const i=document.getElementById('qty-mer');i.value=Math.max(1,(parseInt(i.value)||0)+d);}
+function toggleMerma(){
+  const p=document.getElementById('mer-panel'), b=document.getElementById('mer-toggle');
+  const abrir=p.style.display==='none';
+  p.style.display=abrir?'block':'none';
+  b.classList.toggle('abierto',abrir);
+  document.getElementById('mer-chevron').className='ti ti-chevron-'+(abrir?'up':'down');
+  if(abrir){llenarMermaProductos();setTimeout(()=>p.scrollIntoView({behavior:'smooth',block:'nearest'}),60);}
+}
+function setMerArea(a){
+  merArea=a;
+  ['SALON','BARRA'].forEach(x=>document.getElementById('mer-a-'+x).classList.toggle('activa',x===a));
+  document.getElementById('mer-ubic-wrap').style.display=a==='SALON'?'block':'none';
+  llenarMermaProductos();
+}
+async function llenarMermaProductos(){
+  const sel=document.getElementById('mer-prod'); if(!sel)return;
+  let prods=[];
+  if(merArea==='SALON'){
+    prods=SALON.maestro.filter(m=>m.categoria==='Bebida').map(m=>m.producto);
+  }else{
+    if(!invCargado&&!DEMO){
+      try{const d=await postOp({op:'leer',que:'conteoAreas'});if(d.status==='ok'){INV.areas=d.areas||[];invCargado=true;}}catch(e){}
+    }
+    const b=INV.areas.find(a=>a.area==='BARRA');
+    prods=b?b.items.map(i=>i.item):[];
+  }
+  const prev=sel.value;
+  sel.innerHTML='<option value="">'+(prods.length?'Selecciona producto...':'Sin productos — reintenta')+'</option>'+
+    prods.map(p=>`<option value="${esc(p)}">${esc(p)}</option>`).join('');
+  if(prods.includes(prev))sel.value=prev;
+}
+async function guardarMerma(){
+  if(!usr||usr.rol!=='encargado'){toast('Solo los encargados registran mermas','err');return;}
+  const prod=document.getElementById('mer-prod').value;
+  const motivo=document.getElementById('mer-motivo').value;
+  const ubic=merArea==='SALON'?document.getElementById('mer-ubic').value:'Barra';
+  const qty=parseInt(document.getElementById('qty-mer').value)||0;
+  const obs=document.getElementById('nota-mer').value.trim();
+  if(!prod){toast('Selecciona un producto','err');return;}
+  if(!motivo){toast('Selecciona el motivo','err');return;}
+  if(qty<=0){toast('Cantidad inválida','err');return;}
+  if(!obsValida(obs)){toast(obsProblema(obs),'err');return;}
+  document.getElementById('btn-mer').disabled=true;
+  document.getElementById('sending-mer').style.display='flex';
+  let ok=false,folio='',msgErr='';
+  try{
+    const j=await postOp({op:'mermaRegistrar',area:merArea,producto:prod,cantidad:qty,motivo,ubicacion:ubic,observacion:obs});
+    ok=j.status==='ok';folio=j.folio||'';msgErr=j.msg||'';
+  }catch(e){ok=false;}
+  document.getElementById('sending-mer').style.display='none';
+  document.getElementById('btn-mer').disabled=false;
+  if(ok){
+    toast(`${folio} · Merma registrada — ${qty} und de ${prod} (${motivo.toLowerCase()})`,'ok');
+    document.getElementById('nota-mer').value='';
+    document.getElementById('qty-mer').value=1;
+    document.getElementById('mer-motivo').value='';
+    valNota('nota-mer','hint-mer','btn-mer');
+  }else{
+    toast(msgErr||'No se pudo registrar — reintenta','err');
+  }
+}
+
+// ============================================================
 // MÓDULO CONSUMO DEL DÍA (encargado)
 // ============================================================
 let PERIODOS=[], periodoSel=-1;
@@ -2006,7 +2118,7 @@ function renderConsumo(){
     html+=`<div class="stk-cat-lbl">🥤 Bebidas — consumo del día</div>`;
     html+=bebidas.map(x=>`
       <div class="stk-row">
-        <span class="stk-nombre">${esc(x.prod)}${x.entradas?`<br><span style="font-size:10px;color:var(--text3)">incluye entrada de ${x.entradas} und</span>`:''}</span>
+        <span class="stk-nombre">${esc(x.prod)}${x.entradas?`<br><span style="font-size:10px;color:var(--text3)">incluye entrada de ${x.entradas} und</span>`:''}${x.mermas?`<br><span style="font-size:10px;color:var(--coral)">sin contar ${x.mermas} und de merma</span>`:''}</span>
         <span class="stk-qty ${x.consumo<0?'s-zero':'s-ok'}">${x.consumo<0?x.consumo+' ⚠️':x.consumo} und</span>
       </div>`).join('');
     html+=`<div style="font-size:10px;color:var(--text3);margin-top:6px">⚠️ Un consumo negativo indica error de conteo o entrada sin registrar.</div>`;
