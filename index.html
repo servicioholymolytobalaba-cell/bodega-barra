@@ -2272,7 +2272,7 @@ function renderPedidoSalon(){
     let notaPar='';
     if(x.cajas===0&&(x.estado==='critico'||x.estado==='bajo')&&x.maximo!==null){
       notaPar=`<div class="ped-nota-par">Ya cubre el máximo definido (${x.maximo} u), así que no se pide nada. `+
-        `Pero alcanza ${x.diasCobertura} día(s) y la reposición tarda ${(PEDSAL.parametros||{}).leadTime||4} — `+
+        `Pero alcanza ${x.diasCobertura} día(s) y la reposición tarda ${(PEDSAL.parametros||{}).leadTime||1} día(s) — `+
         (x.maximoSugerido
           ? `el máximo debería ser ~<b>${x.maximoSugerido} u</b>. Conviene subirlo en el Sheet.`
           : `conviene revisar el máximo (aún faltan días de historia para sugerir un número).`)+
