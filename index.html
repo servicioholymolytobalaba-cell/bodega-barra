@@ -216,6 +216,14 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
   font-size:11.5px;font-weight:600}
 .hist-chip b{font-weight:800}
 /* ---- HISTORIAL DE CONTEOS ---- */
+.var-res{background:#fff;border:1.5px solid var(--border);border-radius:14px;padding:14px;margin-bottom:10px}
+.var-res .n{font-size:26px;font-weight:800;line-height:1}
+.var-res .s{font-size:11.5px;color:var(--text3);margin-top:5px;line-height:1.45}
+.var-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--border);font-size:12.5px}
+.var-row:last-child{border-bottom:none}
+.var-row .d{font-size:10.5px;color:var(--text3)}
+.var-pill{font-size:10.5px;font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap}
+.vp-cuadra{background:#DCFCE7;color:#166534}.vp-falta{background:#FEE2E2;color:#991B1B}.vp-sobra{background:#FEF3C7;color:#92400E}.vp-no{background:#E7E5E4;color:#57534E}
 .ch-card{background:#fff;border:1.5px solid var(--border);border-radius:14px;margin-bottom:8px;overflow:hidden}
 .ch-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 13px;
   cursor:pointer;background:#fff}
@@ -563,6 +571,15 @@ select{width:100%;height:44px;border-radius:var(--radius);border:1.5px solid var
        "Conteos" son los conteos tal como quedaron registrados. Antes solo se
        veía lo derivado, así que no había forma de revisar qué se contó un día
        ni quién lo hizo. -->
+  <!-- VARIANZA (V20): solo Jorge, Angela, Claudio y Carlos -->
+  <div id="tab-varianza" class="tab-body" style="display:none">
+    <div class="banner banner-ok">
+      <i class="ti ti-scale"></i> Lo que salió del inventario contra lo vendido en Justo
+    </div>
+    <div id="varianza-body"><div class="empty">Cargando...</div></div>
+    <div id="varianza-hist"></div>
+  </div>
+
   <div id="tab-consumo" class="tab-body" style="display:none">
     <div class="ped-switch">
       <button class="ped-tab activa" id="cv-consumo" onclick="setConsVista('consumo')">📉 Consumo</button>
@@ -694,6 +711,7 @@ const TABS_POR_ROL={
     {id:'conteo',label:'Conteo',icon:'ti-clipboard-check'},
     {id:'inventario',label:'Inventario',icon:'ti-list-check'},
     {id:'bodega',label:'Bodega',icon:'ti-building-warehouse'},   // solo si PUEDE_BODEGA (Jorge y Angela)
+    {id:'varianza',label:'Varianza',icon:'ti-scale'},           // solo si PUEDE_VARIANZA
     {id:'consumo',label:'Consumo',icon:'ti-trending-down'},
     {id:'stock',label:'Stock',icon:'ti-chart-bar'},
     {id:'pedidos',label:'Pedidos',icon:'ti-shopping-cart'},
@@ -729,6 +747,7 @@ let INVH=null, invhCargado=false, invhAbierto={}, invModo='contar';
 // Conteo de bodega (solo Jorge y Angela). BOD guarda lo tecleado por producto
 // para que sobreviva al filtrar/buscar.
 let PUEDE_BODEGA=false, BOD={};
+let PUEDE_VARIANZA=false;   // V20: solo Jorge, Angela, Claudio y Carlos (lo decide el servidor)
 let reqPend=0;
 
 // ---------- DATOS DEMO ----------
@@ -906,6 +925,8 @@ async function doLogin(){
   aplicarPermisosUI();          // antes de mostrar nada: el rol manda desde el primer frame
   const tabs=TABS_POR_ROL[usr.rol]||TABS_POR_ROL.garzon;
   goTab(tabs[0].id);
+  // V20: el aviso de Google Chat abre la app con #varianza.
+  if(location.hash==='#varianza'&&PUEDE_VARIANZA)goTab('varianza');
   // El historial ya no se dibuja acá: lo carga goTab desde el servidor cuando
   // se abre la pestaña, así no se paga esa lectura si nadie la mira.
   if(usr.rol==='encargado'){initCats();renderProds();renderStk();renderReqs();iniciarPollingBadge();}
@@ -935,6 +956,7 @@ function aplicarPanel(p){
   if(p.pedidos&&p.pedidos.status==='ok'){PED=p.pedidos.pedidos||[];pedCargado=true;}
   if(p.conteoAreas&&p.conteoAreas.status==='ok'){INV.areas=p.conteoAreas.areas||[];invCargado=true;}
   PUEDE_BODEGA=!!p.puedeContarBodega;
+  PUEDE_VARIANZA=!!p.puedeVerVarianza;
 }
 
 // El badge de requerimientos se refresca solo cada 75 s mientras haya
@@ -959,7 +981,7 @@ function logout(){
   CONTEOS=null;conteosCargado=false;chAbierto={};
   INV={areas:[]};invCargado=false;invArea=null;
   INVH=null;invhCargado=false;invhAbierto={};invModo='contar';
-  PUEDE_BODEGA=false;BOD={};bodCat='';
+  PUEDE_BODEGA=false;BOD={};bodCat='';PUEDE_VARIANZA=false;VARZ=null;VARZ_HIST=[];varhAbierto={};setConsVista('consumo');
   document.getElementById('bod-list').innerHTML='';document.getElementById('bod-result').innerHTML='';document.getElementById('nota-bod').value='';
   document.getElementById('inv-hist').innerHTML='';
   document.getElementById('inv-items').innerHTML='';   // los números de uno no quedan para el siguiente
@@ -986,7 +1008,8 @@ function buildNav(){
   // tiene ítems cargados: una pestaña vacía en la app del salón solo confunde.
   const tabs=(TABS_POR_ROL[usr.rol]||TABS_POR_ROL.garzon)
     .filter(t=>!(t.id==='inventario'&&usr.rol==='garzon'&&invCargado&&!INV.areas.length))
-    .filter(t=>t.id!=='bodega'||PUEDE_BODEGA);   // la pestaña ni existe para el resto
+    .filter(t=>t.id!=='bodega'||PUEDE_BODEGA)    // la pestaña ni existe para el resto
+    .filter(t=>t.id!=='varianza'||PUEDE_VARIANZA);
   document.getElementById('nav-tabs').innerHTML=tabs.map(t=>
     `<button class="nav-tab" id="navtab-${t.id}" onclick="goTab('${t.id}')">
       <i class="ti ${t.icon}"></i> ${t.label}${t.id==='inventario'&&INV.areas.some(a=>a.toca)?' •':''}${t.badge?'<span class="nav-badge" id="req-badge" style="display:none">0</span>':''}
@@ -996,7 +1019,7 @@ function buildNav(){
 
 let salonCargado=false, pedCargado=false, consumoCargado=false;
 function goTab(t){
-  ['registro','reque','conteo','inventario','bodega','consumo','historial','stock','pedidos'].forEach(id=>{
+  ['registro','reque','conteo','inventario','bodega','varianza','consumo','historial','stock','pedidos'].forEach(id=>{
     const el=document.getElementById('tab-'+id);
     if(el)el.style.display=id===t?'block':'none';
     const nb=document.getElementById('navtab-'+id);
@@ -1022,6 +1045,7 @@ function goTab(t){
   }
   if(t==='stock'&&!salonCargado)cargarSalon().then(()=>renderStk()); // visión total: barra + salón
   if(t==='consumo'){consumoCargado?renderConsumo():cargarConsumo();}
+  if(t==='varianza'&&PUEDE_VARIANZA)cargarVarianza();
   if(t==='historial'){histCargado?renderHist():cargarHistorial();}
   // La pestaña abre en Bebidas: es el pedido que se arma cada lunes. El de
   // barra queda a un toque, ya cargado desde el panel del login.
@@ -1540,6 +1564,9 @@ async function guardarConteo(){
     document.getElementById('nota-cnt').value='';
     salonCargado=false;consumoCargado=false; // el consumo del día cambió
     cargarSalon(); // refresca "último conteo"
+    // V20: si el reporte del día ya salió, un reconteo manda una actualización
+    // a Google Chat. No se espera: si falla, el vigilante lo retoma en 15 min.
+    postOp({op:'varianzaCalcular'}).catch(()=>{});
   }else{
     // Los números siguen en pantalla: se puede reintentar sin recontar
     document.getElementById('btn-cnt').disabled=false;
@@ -2011,12 +2038,87 @@ function setPeriodo(i){periodoSel=i;renderConsumo();}
 let CONTEOS=null, conteosCargado=false, chAbierto={};
 
 function setConsVista(v){
-  const esCons=v==='consumo';
-  document.getElementById('cons-vista-consumo').style.display=esCons?'block':'none';
-  document.getElementById('cons-vista-conteos').style.display=esCons?'none':'block';
-  document.getElementById('cv-consumo').classList.toggle('activa',esCons);
-  document.getElementById('cv-conteos').classList.toggle('activa',!esCons);
-  if(!esCons&&!conteosCargado)cargarConteos();
+  ['consumo','conteos'].forEach(x=>{
+    document.getElementById('cons-vista-'+x).style.display=x===v?'block':'none';
+    document.getElementById('cv-'+x).classList.toggle('activa',x===v);
+  });
+  if(v==='conteos'&&!conteosCargado)cargarConteos();
+}
+
+// ---------- VARIANZA (V20) ----------
+// El servidor arma UN reporte diario (bebidas de hoy + barra de anoche) a la
+// hora fijada y lo manda a Google Chat. Acá solo se lee el último reporte.
+let VARZ=null, VARZ_HORA='14:00', VARZ_HIST=[], varhAbierto={};
+async function cargarVarianza(){
+  const el=document.getElementById('varianza-body');
+  if(!VARZ)el.innerHTML='<div class="empty"><i class="ti ti-loader spin"></i> Cargando varianza...</div>';
+  try{
+    const d=await postOp({op:'varianza'});
+    if(d.status!=='ok')throw new Error(d.msg||'Error');
+    VARZ=d.reporte;VARZ_HORA=d.horaReporte||VARZ_HORA;VARZ_HIST=d.historial||[];renderVarianza();renderVarianzaHist();
+  }catch(e){
+    el.innerHTML='<div class="empty">No se pudo cargar.<br><button class="retry-btn" onclick="cargarVarianza()">↻ Reintentar</button></div>';
+  }
+}
+function varNum(x){return String(Math.round(x*100)/100).replace('.',',');}
+function seccionVarianza(r,titulo){
+  if(!r)return '';
+  const head=t=>`<div style="font-size:13px;font-weight:800;margin:14px 0 8px">${titulo}</div>`+t;
+  if(r.estado==='error')return head('<div class="var-res"><div class="s">No se pudieron leer las ventas de Justo. El servidor reintenta cada 15 minutos.</div></div>');
+  if(r.estado==='sin_conteo')return head(`<div class="var-res"><div class="s"><b style="color:#B91C1C">${r.area==='Barra'?'No se hizo el cierre de barra de esa noche.':'No se hizo el conteo de apertura.'}</b></div></div>`);
+  if(r.estado==='sin_base')return head('<div class="var-res"><div class="s">Falta un conteo anterior para comparar.</div></div>');
+  const revisar=r.productos.filter(f=>f.estado!=='cuadra');
+  const color=revisar.length||r.noContados.length?'#B45309':'#15803D';
+  const esBarra=r.area==='Barra';
+  let h=`<div class="var-res">
+    <div class="n" style="color:${color}">${r.cuadran} de ${r.total} <span style="font-size:14px;font-weight:700">cuadraron</span></div>
+    <div class="s">${esBarra?'Cierre':'Conteo'} del ${dLargo(r.dia)} ${esc(r.conteoHora)}<br>contra el del ${dLargo(r.base)} ${esc(r.baseHora)}</div>
+  </div>`;
+  const pill=f=>f.estado==='cuadra'?'<span class="var-pill vp-cuadra">cuadra</span>':
+    f.estado==='falta'?`<span class="var-pill vp-falta">faltan ${varNum(Math.abs(f.dif))}</span>`:`<span class="var-pill vp-sobra">sobran ${varNum(Math.abs(f.dif))}</span>`;
+  h+='<div class="ch-card">'+r.productos.map(f=>`<div class="var-row">
+    <span>${esc(f.producto)}<br><span class="d">${f.inicial}${f.entradas?' + '+f.entradas+' llegada':''}${f.mermas?' − '+f.mermas+' merma':''} − ${f.final} = salió ${varNum(f.fisico)} · Justo ${varNum(f.vendido)}</span></span>
+    ${pill(f)}</div>`).join('')+
+    r.noContados.map(p=>`<div class="var-row"><span>${esc(p)}</span><span class="var-pill vp-no">sin contar</span></div>`).join('')+'</div>';
+  if(revisar.length)h+=`<div style="font-size:11px;color:var(--text3);line-height:1.5">
+    <b>Falta</b>: salió más de lo vendido → recontar; si se confirma, revisar mermas o cortesías sin registrar.<br>
+    <b>Sobra</b>: salió menos de lo vendido → ${esBarra?'reposición desde bodega no registrada.':'llegada sin registrar o caja no vista en el conteo anterior.'}</div>`;
+  return head(h);
+}
+// Historial: un renglón por día y área (el último cálculo de ese día);
+// al tocarlo se abre el detalle producto por producto.
+function varhToggle(k){varhAbierto[k]=!varhAbierto[k];renderVarianzaHist();}
+function renderVarianzaHist(){
+  const el=document.getElementById('varianza-hist');
+  if(!VARZ_HIST.length){el.innerHTML='';return;}
+  const dias=[...new Set(VARZ_HIST.map(r=>r.dia))].sort().reverse();
+  let h='<div style="font-size:13px;font-weight:800;margin:20px 0 8px">🗓️ Historial</div>';
+  dias.forEach(d=>{
+    const del=VARZ_HIST.filter(r=>r.dia===d);
+    h+=`<div style="font-size:11.5px;font-weight:700;color:var(--text2);margin:10px 0 5px;text-transform:capitalize">${dLargo(d)}</div>`;
+    del.forEach(r=>{
+      const k=r.area+'|'+r.dia, ab=!!varhAbierto[k];
+      const rev=r.productos.filter(f=>f.estado!=='cuadra');
+      const ok=!rev.length;
+      h+=`<div class="ch-card"><div class="ch-head" onclick="varhToggle('${esc(k)}')">
+        <div style="min-width:0"><div class="ch-fecha">${r.area==='Barra'?'🍸 Barra':'🥤 Bebidas'}</div>
+        <div class="ch-meta">vs ${dLargo(r.base)}${rev.length?' · '+rev.map(f=>esc(f.producto)+' '+(f.dif>0?'−':'+')+varNum(Math.abs(f.dif))).slice(0,3).join(', '):''}</div></div>
+        <span class="var-pill ${ok?'vp-cuadra':'vp-sobra'}">${r.cuadran}/${r.total}</span></div>`;
+      if(ab)h+='<div>'+r.productos.map(f=>`<div class="var-row">
+        <span>${esc(f.producto)}<br><span class="d">${f.inicial}${f.entradas?' + '+f.entradas+' llegada':''}${f.mermas?' − '+f.mermas+' merma':''} − ${f.final} = salió ${varNum(f.fisico)} · Justo ${varNum(f.vendido)}</span></span>
+        <span class="var-pill ${f.estado==='cuadra'?'vp-cuadra':f.estado==='falta'?'vp-falta':f.estado==='sobra'?'vp-sobra':'vp-no'}">${f.estado==='cuadra'?'cuadra':f.estado==='falta'?'faltan '+varNum(Math.abs(f.dif)):f.estado==='sobra'?'sobran '+varNum(Math.abs(f.dif)):'sin contar'}</span></div>`).join('')+'</div>';
+      h+='</div>';
+    });
+  });
+  el.innerHTML=h;
+}
+function renderVarianza(){
+  const el=document.getElementById('varianza-body');
+  const r=VARZ;
+  if(!r){el.innerHTML=`<div class="empty">Todavía no hay reporte. Sale solo todos los días a las ${esc(VARZ_HORA)} y llega al espacio de Google Chat.</div>`;return;}
+  const hoy=new Date().toLocaleDateString('en-CA',{timeZone:'America/Santiago'});
+  el.innerHTML=`<div style="font-size:11.5px;color:var(--text3)">${r.dia!==hoy?'<b style="color:#B91C1C">El reporte de hoy aún no sale</b> (sale a las '+esc(VARZ_HORA)+'). Último: ':'Reporte de '}${dLargo(r.dia)} · ${esc(r.hora)}</div>`+
+    seccionVarianza(r.bebidas,'🥤 Bebidas del salón')+seccionVarianza(r.barra,'🍸 Barra (8 ítems)');
 }
 
 async function cargarConteos(){
